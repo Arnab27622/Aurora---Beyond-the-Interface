@@ -35,7 +35,7 @@ export const ChatHeader = ({
             >
                 {showHistory ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <h1 className="text-xl font-semibold">Aurora</h1>
+            <h1 className="text-xl font-semibold">Aurora - Beyond the Interface</h1>
         </div>
 
         <div className="flex items-center gap-3">
