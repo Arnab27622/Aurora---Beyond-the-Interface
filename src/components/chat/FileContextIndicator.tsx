@@ -27,7 +27,7 @@ export const FileContextIndicator = ({
             <button
                 onClick={clearFileContext}
                 className={cn(
-                    "p-1 rounded-full",
+                    "p-1 rounded-full cursor-pointer",
                     darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                 )}
             >

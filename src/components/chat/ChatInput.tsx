@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { File, ImageIcon, Loader2 } from "lucide-react";
+import { File, ImageIcon, Mic, Square, Loader2, Send } from "lucide-react"; // Added Send icon
 import { FileContextType } from "@/lib/types";
 import React from "react";
 
@@ -19,7 +19,10 @@ interface ChatInputProps {
     clearFileContext: () => void;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     imageInputRef: React.RefObject<HTMLInputElement | null>;
-    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void; // Added this
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    isListening: boolean;
+    toggleSpeechRecognition: () => void;
+    speechSupported: boolean;
 }
 
 export const ChatInput = ({
@@ -36,7 +39,10 @@ export const ChatInput = ({
     clearFileContext,
     fileInputRef,
     imageInputRef,
-    onKeyDown, // Added this
+    onKeyDown,
+    isListening,
+    toggleSpeechRecognition,
+    speechSupported,
 }: ChatInputProps) => (
     <form
         onSubmit={(e) => {
@@ -64,7 +70,7 @@ export const ChatInput = ({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isFileLoading || loading}
                 className={cn(
-                    "rounded-full shrink-0",
+                    "rounded-full shrink-0 cursor-pointer",
                     darkMode
                         ? "border-gray-500 bg-transparent hover:bg-white text-white"
                         : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
@@ -72,6 +78,30 @@ export const ChatInput = ({
             >
                 <File className="h-4 w-4" />
             </Button>
+
+            {/* Microphone button */}
+            {speechSupported && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleSpeechRecognition}
+                    disabled={loading || isFileLoading}
+                    className={cn(
+                        "rounded-full shrink-0 cursor-pointer",
+                        darkMode
+                            ? "border-gray-500 bg-transparent hover:bg-white text-white"
+                            : "border-gray-300 bg-transparent hover:bg-gray-100 text-black",
+                        isListening ? (darkMode ? "bg-red-500" : "bg-red-400") : ""
+                    )}
+                >
+                    {isListening ? (
+                        <Square className="h-4 w-4" />
+                    ) : (
+                        <Mic className="h-4 w-4" />
+                    )}
+                </Button>
+            )}
 
             <input
                 type="file"
@@ -88,7 +118,7 @@ export const ChatInput = ({
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isFileLoading || loading}
                 className={cn(
-                    "rounded-full shrink-0",
+                    "rounded-full shrink-0 cursor-pointer",
                     darkMode
                         ? "border-gray-500 bg-transparent hover:bg-white text-white"
                         : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
@@ -109,7 +139,7 @@ export const ChatInput = ({
                     setIsTyping(e.target.value.length > 0);
                 }}
                 onBlur={() => setIsTyping(false)}
-                onKeyDown={onKeyDown} // Added this
+                onKeyDown={onKeyDown}
                 className={cn(
                     "flex-grow rounded-full px-4 py-2 text-sm border placeholder:text-gray-400",
                     darkMode
@@ -118,12 +148,25 @@ export const ChatInput = ({
                 )}
                 disabled={loading || isFileLoading}
             />
+
+            {/* Updated Send Button with Icon */}
             <Button
                 type="submit"
-                className="rounded-full px-4 py-2 text-sm bg-blue-500 text-white hover:bg-blue-600"
+                size="icon"
+                className={cn(
+                    "rounded-full shrink-0 cursor-pointer",
+                    darkMode
+                        ? "bg-blue-500 hover:bg-blue-600 text-white"
+                        : "bg-blue-500 hover:bg-blue-600 text-white",
+                    (loading || isFileLoading) && "opacity-50 cursor-not-allowed"
+                )}
                 disabled={loading || (!input.trim() && !fileContext) || isFileLoading}
             >
-                Send
+                {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                    <Send className="h-4 w-4" />
+                )}
             </Button>
         </div>
     </form>

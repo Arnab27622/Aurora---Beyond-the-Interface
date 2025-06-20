@@ -39,7 +39,7 @@ export const ChatHistory = ({
                     size="icon"
                     onClick={() => setShowHistory(true)}
                     className={cn(
-                        "mb-4",
+                        "mb-4 cursor-pointer",
                         darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                     )}
                 >
@@ -49,7 +49,9 @@ export const ChatHistory = ({
                     variant="ghost"
                     size="icon"
                     onClick={newChat}
-                    className={cn(darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200")}
+                    className={cn(
+                        "cursor-pointer",
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200")}
                 >
                     <Plus className="h-5 w-5" />
                 </Button>
@@ -68,7 +70,7 @@ export const ChatHistory = ({
                             size="icon"
                             onClick={() => setShowHistory(false)}
                             className={cn(
-                                "mr-2",
+                                "mr-2 cursor-pointer",
                                 darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                             )}
                         >
@@ -80,6 +82,7 @@ export const ChatHistory = ({
                         onClick={newChat}
                         size="sm"
                         className={cn(
+                            "cursor-pointer",
                             darkMode
                                 ? "bg-blue-600 hover:bg-blue-700"
                                 : "bg-blue-500 hover:bg-blue-600"
@@ -126,7 +129,7 @@ export const ChatHistory = ({
                                     size="icon"
                                     onClick={(e) => deleteSession(session.id, e)}
                                     className={cn(
-                                        "opacity-0 group-hover:opacity-100 transition-opacity",
+                                        "opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
                                         darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
                                     )}
                                 >

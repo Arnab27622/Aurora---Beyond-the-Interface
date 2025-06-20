@@ -29,7 +29,7 @@ export const ChatHeader = ({
                 size="icon"
                 onClick={() => setShowHistory(!showHistory)}
                 className={cn(
-                    "md:hidden",
+                    "md:hidden cursor-pointer",
                     darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                 )}
             >
@@ -44,6 +44,7 @@ export const ChatHeader = ({
                 size="sm"
                 onClick={clearChat}
                 className={cn(
+                    "cursor-pointer",
                     darkMode
                         ? "border-gray-500 bg-transparent hover:bg-white text-white"
                         : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
@@ -57,6 +58,7 @@ export const ChatHeader = ({
                 size="sm"
                 onClick={() => setDarkMode(!darkMode)}
                 className={cn(
+                    "cursor-pointer",
                     darkMode
                         ? "border-gray-500 bg-transparent hover:bg-white"
                         : "border-gray-300 bg-transparent hover:bg-gray-100"

@@ -12,8 +12,8 @@ import { markdownComponents } from "@/components/chat/markdown-components";
 import { Message, ChatSession, FileContextType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "AIzaSyBFx7fTKDC6jg0NMxI-bhIzbJXaTzsoJ2A";
-const MODEL_ID = "gemini-1.5-flash";
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const MODEL_ID = process.env.NEXT_PUBLIC_GEMINI_MODEL_ID;
 
 declare global {
     interface Window {
@@ -39,6 +39,10 @@ export default function ChatbotPage() {
     const [fileContext, setFileContext] = useState<FileContextType>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const [isListening, setIsListening] = useState(false);
+    const [speechSupported, setSpeechSupported] = useState(false);
+    const recognitionRef = useRef<any>(null);
+    const finalTranscriptRef = useRef("");
 
     // Suggested prompts
     const [suggestedPrompts] = useState([
@@ -57,6 +61,49 @@ export default function ChatbotPage() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    // Initialize speech recognition
+    useEffect(() => {
+        const SpeechRecognition = (window as any).SpeechRecognition ||
+            (window as any).webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            setSpeechSupported(true);
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+
+            recognitionRef.current.onresult = (event: any) => {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscriptRef.current += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                setInput(finalTranscriptRef.current + interimTranscript);
+                setIsTyping(true);
+            };
+
+            recognitionRef.current.onerror = (event: any) => {
+                console.error('Speech recognition error', event.error);
+                stopListening();
+            };
+
+            recognitionRef.current.onend = () => {
+                if (isListening) {
+                    startListening();
+                }
+            };
+        }
+
+        return () => {
+            stopListening();
+        };
+    }, []);
 
     // Hydrate state from localStorage
     useEffect(() => {
@@ -133,6 +180,29 @@ export default function ChatbotPage() {
             )
         );
     }, [messages, currentSessionId, hasHydrated]);
+
+    const startListening = () => {
+        if (recognitionRef.current && !isListening) {
+            finalTranscriptRef.current = input;
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    };
+
+    const stopListening = () => {
+        if (recognitionRef.current && isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        }
+    };
+
+    const toggleSpeechRecognition = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
 
     // Create new chat session
     const newChat = () => {
@@ -538,6 +608,22 @@ export default function ChatbotPage() {
                         </div>
                     )}
 
+                    {/* Listening Indicator */}
+                    {isListening && (
+                        <div className={cn(
+                            "fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50",
+                            "text-xs py-1 px-2 rounded-full flex items-center",
+                            darkMode ? "bg-red-700 text-white" : "bg-red-400 text-white"
+                        )}>
+                            <span className="flex h-2 w-2 mr-2">
+                                <span className="animate-ping absolute h-2 w-2 rounded-full bg-white opacity-75"></span>
+                                <span className="relative h-2 w-2 rounded-full bg-white"></span>
+                            </span>
+                            Listening...
+                        </div>
+                    )}
+
+
                     <FileContextIndicator
                         fileContext={fileContext}
                         clearFileContext={clearFileContext}
@@ -558,7 +644,10 @@ export default function ChatbotPage() {
                         clearFileContext={clearFileContext}
                         fileInputRef={fileInputRef}
                         imageInputRef={imageInputRef}
-                        onKeyDown={handleKeyDown} // Added this prop
+                        onKeyDown={handleKeyDown}
+                        isListening={isListening}
+                        toggleSpeechRecognition={toggleSpeechRecognition}
+                        speechSupported={speechSupported}
                     />
                 </div>
             </div>

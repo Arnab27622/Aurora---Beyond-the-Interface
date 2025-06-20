@@ -16,3 +16,8 @@ export type FileContextType = {
     data: string;
     filename: string;
 } | null;
+
+export interface SpeechRecognitionState {
+  isListening: boolean;
+  isAvailable: boolean;
+}
