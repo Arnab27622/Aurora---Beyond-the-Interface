@@ -30,21 +30,21 @@ cd Aurora---Beyond-the-Interface
 ```
 
 
-## Install dependencies
+## 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-## Set up environment variables
+## 3. Set up environment variables
 
 ```bash
-# Create .env.local file
+# Create .env.local in root directory file
 NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
 NEXT_PUBLIC_GEMINI_MODEL_ID=your_model_id_here
 ```
 
-## Run the development server
+## 4. Run the development server
 
 ```bash
 npm run dev
