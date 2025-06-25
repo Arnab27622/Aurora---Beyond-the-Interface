@@ -27,11 +27,14 @@
 ```bash
 git clone https://github.com/Arnab27622/Aurora---Beyond-the-Interface.git
 cd Aurora---Beyond-the-Interface
+```
+
 
 ## Install dependencies
 
 ```bash
 npm install
+```
 
 ## Set up environment variables
 
@@ -39,10 +42,11 @@ npm install
 # Create .env.local file
 NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
 NEXT_PUBLIC_GEMINI_MODEL_ID=your_model_id_here
+```
 
 ## Run the development server
 
 ```bash
 npm run dev
-
+```
 
