@@ -47,6 +47,7 @@ NEXT_PUBLIC_GEMINI_MODEL_ID=your_model_id_here
 ## 4. Run the development server
 
 ```bash
+cd Aurora---Beyond-the-Interface
 npm run dev
 ```
 

@@ -1,7 +1,6 @@
 import ReactMarkdown, { Components } from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Message } from "@/lib/types";
-import { CopyButton } from "@/components/ui/copy-button";
 
 interface ChatMessageProps {
     message: Message;

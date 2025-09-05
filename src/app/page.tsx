@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatHistory } from "@/components/chat/ChatHistory";
 import { ChatMessage } from "@/components/chat/ChatMessage";
@@ -313,7 +312,6 @@ export default function ChatbotPage() {
                 if (fileContext.type === "pdf") {
                     apiContent = `[PDF: ${fileContext.filename}]\n${fileContext.data}\n\n[Question]: ${input.trim()}`;
                 } else if (fileContext.type === "image") {
-                    // For images, we'll send as a separate part
                     filePart = {
                         inline_data: {
                             mime_type: "image/jpeg",
