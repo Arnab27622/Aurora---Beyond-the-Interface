@@ -12,6 +12,7 @@ import { Message, FileContextType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useGemini } from "@/lib/useGemini";
 import { useChatSessions } from "@/lib/useChatSessions";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 
 declare global {
     interface Window {
@@ -26,16 +27,12 @@ export default function ChatbotPage() {
     const [isTyping, setIsTyping] = useState(false);
     const [isFileLoading, setIsFileLoading] = useState(false);
     const [fileContext, setFileContext] = useState<FileContextType>(null);
-    const [isListening, setIsListening] = useState(false);
-    const [speechSupported, setSpeechSupported] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
-    const recognitionRef = useRef<any>(null);
-    const finalTranscriptRef = useRef("");
 
     const { sendMessage: sendGeminiMessage, isConfigured } = useGemini();
     const {
@@ -53,6 +50,11 @@ export default function ChatbotPage() {
         setMessageId,
         setCurrentSessionId,
     } = useChatSessions();
+
+    const { isListening, speechSupported, toggleSpeechRecognition } = useSpeechRecognition(
+        setInput,
+        setIsTyping
+    );
 
     // Suggested prompts
     const [suggestedPrompts] = useState([
@@ -72,76 +74,10 @@ export default function ChatbotPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Initialize speech recognition
-    useEffect(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition ||
-            (window as any).webkitSpeechRecognition;
-
-        if (SpeechRecognition) {
-            setSpeechSupported(true);
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-
-            recognitionRef.current.onresult = (event: any) => {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscriptRef.current += transcript + ' ';
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-
-                setInput(finalTranscriptRef.current + interimTranscript);
-                setIsTyping(true);
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error('Speech recognition error', event.error);
-                stopListening();
-            };
-
-            recognitionRef.current.onend = () => {
-                if (isListening) {
-                    startListening();
-                }
-            };
-        }
-
-        return () => {
-            stopListening();
-        };
-    }, []);
-
     // Save dark mode preference to localStorage
     useEffect(() => {
         localStorage.setItem("darkMode", darkMode.toString());
     }, [darkMode]);
-
-    const startListening = () => {
-        if (recognitionRef.current && !isListening) {
-            finalTranscriptRef.current = input;
-            recognitionRef.current.start();
-            setIsListening(true);
-        }
-    };
-
-    const stopListening = () => {
-        if (recognitionRef.current && isListening) {
-            recognitionRef.current.stop();
-            setIsListening(false);
-        }
-    };
-
-    const toggleSpeechRecognition = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
-    };
 
     // Wrap hook functions to also clear UI state
     const handleNewChat = () => {
