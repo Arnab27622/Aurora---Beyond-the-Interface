@@ -8,11 +8,10 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { FileContextIndicator } from "@/components/chat/FileContextIndicator";
 import { SuggestedPrompts } from "@/components/chat/SuggestedPrompts";
 import { markdownComponents } from "@/components/chat/markdown-components";
-import { Message, ChatSession, FileContextType } from "@/lib/types";
+import { Message, FileContextType } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-const MODEL_ID = process.env.NEXT_PUBLIC_GEMINI_MODEL_ID;
+import { useGemini } from "@/lib/useGemini";
+import { useChatSessions } from "@/lib/useChatSessions";
 
 declare global {
     interface Window {
@@ -22,26 +21,38 @@ declare global {
 
 export default function ChatbotPage() {
     const [isMounted, setIsMounted] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState("");
-    const [hasHydrated, setHasHydrated] = useState(false);
-    const [messageId, setMessageId] = useState(1);
-    const [loading, setLoading] = useState(false);
     const [darkMode, setDarkMode] = useState(true);
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
-    const [showHistory, setShowHistory] = useState(false);
-    const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isFileLoading, setIsFileLoading] = useState(false);
     const [fileContext, setFileContext] = useState<FileContextType>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
     const [isListening, setIsListening] = useState(false);
     const [speechSupported, setSpeechSupported] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const recognitionRef = useRef<any>(null);
     const finalTranscriptRef = useRef("");
+
+    const { sendMessage: sendGeminiMessage, isConfigured } = useGemini();
+    const {
+        chatSessions,
+        currentSessionId,
+        messages,
+        messageId,
+        isLoading,
+        hasHydrated,
+        newChat,
+        loadChat,
+        deleteSession,
+        clearChat,
+        setMessages,
+        setMessageId,
+        setCurrentSessionId,
+    } = useChatSessions();
 
     // Suggested prompts
     const [suggestedPrompts] = useState([
@@ -104,81 +115,10 @@ export default function ChatbotPage() {
         };
     }, []);
 
-    // Hydrate state from localStorage
+    // Save dark mode preference to localStorage
     useEffect(() => {
-        const savedDarkMode = localStorage.getItem("darkMode");
-        const savedSessions = localStorage.getItem("chatSessions");
-        const savedCurrentSession = localStorage.getItem("currentSessionId");
-        const savedMessages = localStorage.getItem("chatMessages");
-
-        let initialSessions: ChatSession[] = [];
-        let initialMessages: Message[] = [];
-        let initialSessionId: string | null = null;
-        let nextMessageId = 1;
-
-        try {
-            if (savedSessions) {
-                initialSessions = JSON.parse(savedSessions);
-            }
-
-            if (savedCurrentSession) {
-                initialSessionId = savedCurrentSession;
-                const session = initialSessions.find((s) => s.id === savedCurrentSession);
-                if (session) {
-                    initialMessages = session.messages;
-                    nextMessageId = Math.max(...session.messages.map((m) => m.id), 0) + 1;
-                }
-            } else if (savedMessages) {
-                initialMessages = JSON.parse(savedMessages);
-                if (initialMessages.length > 0) {
-                    nextMessageId = Math.max(...initialMessages.map((m) => m.id), 0) + 1;
-                }
-            }
-        } catch (e) {
-            console.error("Error parsing localStorage data:", e);
-        }
-
-        setChatSessions(initialSessions);
-        setMessages(initialMessages);
-        setMessageId(nextMessageId);
-        setCurrentSessionId(initialSessionId);
-
-        if (savedDarkMode) {
-            setDarkMode(savedDarkMode === "true");
-        }
-
-        setHasHydrated(true);
-        setIsLoading(false);
-    }, []);
-
-    // Save state to localStorage
-    useEffect(() => {
-        if (!hasHydrated) return;
-
         localStorage.setItem("darkMode", darkMode.toString());
-        localStorage.setItem("chatSessions", JSON.stringify(chatSessions));
-
-        if (currentSessionId) {
-            localStorage.setItem("currentSessionId", currentSessionId);
-            localStorage.removeItem("chatMessages");
-        } else {
-            localStorage.setItem("chatMessages", JSON.stringify(messages));
-            localStorage.removeItem("currentSessionId");
-        }
-    }, [messages, darkMode, chatSessions, currentSessionId, hasHydrated]);
-
-    // Update existing session when messages change
-    useEffect(() => {
-        if (!hasHydrated || !currentSessionId) return;
-
-        setChatSessions((prev) =>
-            prev.map((session) =>
-                session.id === currentSessionId
-                    ? { ...session, messages, timestamp: Date.now() }
-                    : session
-            )
-        );
-    }, [messages, currentSessionId, hasHydrated]);
+    }, [darkMode]);
 
     const startListening = () => {
         if (recognitionRef.current && !isListening) {
@@ -203,72 +143,25 @@ export default function ChatbotPage() {
         }
     };
 
-    // Create new chat session
-    const newChat = () => {
-        if (!currentSessionId && messages.length > 0) {
-            const title = messages[0].content.substring(0, 30) +
-                (messages[0].content.length > 30 ? "..." : "");
-
-            const newSession: ChatSession = {
-                id: Date.now().toString(),
-                title,
-                timestamp: Date.now(),
-                messages: [...messages],
-            };
-
-            setChatSessions((prev) => [newSession, ...prev]);
-        }
-
-        setMessages([]);
-        setMessageId(1);
-        setCurrentSessionId(null);
+    // Wrap hook functions to also clear UI state
+    const handleNewChat = () => {
+        newChat();
         setShowHistory(false);
         setInput("");
         setIsTyping(false);
         setFileContext(null);
     };
 
-    // Load chat session
-    const loadChat = (sessionId: string) => {
-        const session = chatSessions.find((s) => s.id === sessionId);
-        if (session) {
-            setMessages(session.messages);
-            setCurrentSessionId(sessionId);
-
-            const maxId = Math.max(...session.messages.map((m) => m.id), 0);
-            setMessageId(maxId + 1);
-
-            if (window.innerWidth < 768) {
-                setShowHistory(false);
-            }
-
-            setInput("");
-            setIsTyping(false);
-            setFileContext(null);
-        }
+    const handleLoadChat = (sessionId: string) => {
+        loadChat(sessionId, () => setShowHistory(false));
+        setInput("");
+        setIsTyping(false);
+        setFileContext(null);
     };
 
-    // Delete chat session
-    const deleteSession = (sessionId: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        setChatSessions((prev) => prev.filter((session) => session.id !== sessionId));
-
-        if (currentSessionId === sessionId) {
-            setMessages([]);
-            setMessageId(1);
-            setCurrentSessionId(null);
-        }
-    };
-
-    // Clear current chat function
-    const clearChat = () => {
-        if (currentSessionId) {
-            setChatSessions((prev) => prev.filter((s) => s.id !== currentSessionId));
-        }
-        setMessages([]);
-        setMessageId(1);
-        setCurrentSessionId(null);
+    const handleClearChat = () => {
+        clearChat();
+        setShowHistory(false);
         setInput("");
         setIsTyping(false);
         setFileContext(null);
@@ -277,11 +170,11 @@ export default function ChatbotPage() {
     const sendMessage = async () => {
         if ((!input.trim() && !fileContext) || loading) return;
 
-        if (API_KEY === "YOUR_API_KEY_HERE") {
+        if (!isConfigured) {
             const errorMessage: Message = {
                 id: messageId + 1,
                 role: "bot",
-                content: "Please set your Google API key in the code. Get a free key from Google AI Studio",
+                content: "Please set your Google API key in the environment variables. Get a free key from Google AI Studio",
             };
             setMessages((prev) => [...prev, errorMessage]);
             setMessageId((id) => id + 2);
@@ -304,77 +197,15 @@ export default function ChatbotPage() {
         setLoading(true);
 
         try {
-            // Prepare API content with file context if available
-            let apiContent = "";
-            let filePart = null;
-
-            if (fileContext) {
-                if (fileContext.type === "pdf") {
-                    apiContent = `[PDF: ${fileContext.filename}]\n${fileContext.data}\n\n[Question]: ${input.trim()}`;
-                } else if (fileContext.type === "image") {
-                    filePart = {
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: fileContext.data
-                        }
-                    };
-                    apiContent = input.trim() || `Please analyze this image: ${fileContext.filename}`;
-                }
-            } else {
-                apiContent = input.trim();
-            }
-
-            // Prepare messages for API
-            const contents = [
-                ...newMessageList.map((m) => ({
-                    role: m.role === "user" ? "user" : "model",
-                    parts: [{ text: m.content }],
-                })),
-                {
-                    role: "user",
-                    parts: filePart
-                        ? [
-                            { text: apiContent },
-                            filePart
-                        ]
-                        : [{ text: apiContent }]
-                }
-            ];
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${API_KEY}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents,
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 2048,
-                        },
-                    }),
-                }
+            const { response: botMessage, nextMessageId } = await sendGeminiMessage(
+                displayContent,
+                newMessageList,
+                fileContext,
+                messageId
             );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(
-                    `API error: ${response.status} ${errorData.error?.message || response.statusText}`
-                );
-            }
-
-            const data = await response.json();
-            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text ||
-                "Sorry, I couldn't process that request.";
-
-            const botMessage: Message = {
-                id: messageId + 1,
-                role: "bot",
-                content: botText,
-            };
-
             setMessages((prev) => [...prev, botMessage]);
-            setMessageId((id) => id + 2);
+            setMessageId(nextMessageId);
         } catch (err: any) {
             console.error("API Error:", err);
             const errorMessage: Message = {
@@ -540,7 +371,7 @@ export default function ChatbotPage() {
             <ChatHeader
                 darkMode={darkMode}
                 setDarkMode={setDarkMode}
-                clearChat={clearChat}
+                clearChat={handleClearChat}
                 showHistory={showHistory}
                 setShowHistory={setShowHistory}
             />
@@ -552,8 +383,8 @@ export default function ChatbotPage() {
                     darkMode={darkMode}
                     showHistory={showHistory}
                     setShowHistory={setShowHistory}
-                    newChat={newChat}
-                    loadChat={loadChat}
+                    newChat={handleNewChat}
+                    loadChat={handleLoadChat}
                     deleteSession={deleteSession}
                 />
 
