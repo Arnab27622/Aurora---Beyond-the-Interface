@@ -39,10 +39,12 @@ npm install
 ## 3. Set up environment variables
 
 ```bash
-# Create .env.local in root directory file
-NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
-NEXT_PUBLIC_GEMINI_MODEL_ID=your_model_id_here
+# Create .env.local in root directory
+GEMINI_API_KEY=your_api_key_here
+GEMINI_MODEL_ID=your_model_id_here
 ```
+
+**Note:** These variables are private (no `NEXT_PUBLIC_` prefix) and are only accessible on the server-side. Your API keys are never exposed to the client.
 
 ## 4. Run the development server
 
