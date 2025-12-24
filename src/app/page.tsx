@@ -146,6 +146,7 @@ export default function ChatbotPage() {
                 (chunk) => {
                     // Add placeholder on first chunk only
                     if (!botMessageAdded) {
+                        fullContent = chunk;
                         setMessages((prev) => [...prev, {
                             id: botMessageId,
                             role: "bot",

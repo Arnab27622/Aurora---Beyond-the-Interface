@@ -418,7 +418,7 @@ export async function POST(request: NextRequest) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 contents,
-                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+                generationConfig: { temperature: 0.7, maxOutputTokens: 6000 },
               }),
               signal: controller.signal,
             }
@@ -545,7 +545,7 @@ export async function POST(request: NextRequest) {
             contents,
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 4096,
+              maxOutputTokens: 6000,
             },
           }),
           signal: controller.signal,
