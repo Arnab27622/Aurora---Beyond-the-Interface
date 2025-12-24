@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import DynamicClasses from './DynamicClasses';
 
+// Server-side environment validation on startup
+import '@/lib/serverStartup';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

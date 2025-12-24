@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { safeValidateEnvironment } from "@/lib/validateEnvironment";
 
 // Constants for validation
 const MAX_INPUT_LENGTH = 10000;
@@ -253,7 +254,7 @@ export async function POST(request: NextRequest) {
     const typedBody = body as ChatRequest;
     const { input, messages, fileContext } = typedBody;
 
-    // Validate environment variables
+    // Quick environment check (startup validation already done)
     const API_KEY = process.env.GEMINI_API_KEY;
     const MODEL_ID = process.env.GEMINI_MODEL_ID;
 
