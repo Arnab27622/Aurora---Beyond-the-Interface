@@ -1,8 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { File, ImageIcon, Mic, Square, Loader2, Send } from "lucide-react"; // Added Send icon
+import { File, ImageIcon, Mic, Square, Loader2, Send } from "lucide-react";
 import { FileContextType } from "@/lib/types";
+import { sanitizeInput } from "@/lib/sanitize";
 import React from "react";
 
 interface ChatInputProps {
@@ -135,8 +136,10 @@ export const ChatInput = ({
                 placeholder={fileContext ? "Ask about the file..." : "Ask anything or upload file"}
                 value={input}
                 onChange={(e) => {
-                    setInput(e.target.value);
-                    setIsTyping(e.target.value.length > 0);
+                    // Sanitize input in real-time
+                    const sanitized = sanitizeInput(e.target.value);
+                    setInput(sanitized);
+                    setIsTyping(sanitized.length > 0);
                 }}
                 onBlur={() => setIsTyping(false)}
                 onKeyDown={onKeyDown}

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
+import { sanitizeInput } from "@/lib/sanitize";
 
 interface UseGeminiReturn {
   sendMessage: (
@@ -21,15 +22,19 @@ export function useGemini(): UseGeminiReturn {
       fileContext: FileContextType,
       messageId: number
     ) => {
+      // Sanitize input on client side before sending
+      const sanitizedInput = sanitizeInput(input);
+      const sanitizedMessages = messages.map((m) => ({
+        role: m.role,
+        content: sanitizeInput(m.content),
+      }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          input,
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          input: sanitizedInput,
+          messages: sanitizedMessages,
           fileContext,
         }),
       });

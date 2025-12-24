@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { safeValidateEnvironment } from "@/lib/validateEnvironment";
+import {
+  sanitizeInput,
+  sanitizeFilename,
+  sanitizeBase64,
+  detectSuspiciousPatterns,
+} from "@/lib/sanitize";
 
 // Constants for validation
 const MAX_INPUT_LENGTH = 10000;
@@ -47,6 +53,16 @@ function validateInput(input: string): { valid: boolean; error?: string } {
   if (input.trim().length === 0) {
     return { valid: false, error: "Input cannot be only whitespace" };
   }
+
+  // Check for suspicious patterns
+  const suspiciousCheck = detectSuspiciousPatterns(input);
+  if (suspiciousCheck.isSuspicious) {
+    return {
+      valid: false,
+      error: `Invalid input: ${suspiciousCheck.reason}`,
+    };
+  }
+
   return { valid: true };
 }
 
@@ -99,6 +115,17 @@ function validateMessages(messages: unknown): {
         error: `Message at index ${i} exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`,
       };
     }
+
+    // Check for suspicious patterns in message content
+    const suspiciousCheck = detectSuspiciousPatterns(
+      typedMsg.content as string
+    );
+    if (suspiciousCheck.isSuspicious) {
+      return {
+        valid: false,
+        error: `Message at index ${i} contains invalid patterns: ${suspiciousCheck.reason}`,
+      };
+    }
   }
 
   return { valid: true };
@@ -142,6 +169,16 @@ function validateFileContext(fileContext: unknown): {
     }
     if ((ctx.data as string).length === 0) {
       return { valid: false, error: "File data cannot be empty" };
+    }
+
+    // Validate base64 data
+    try {
+      sanitizeBase64(ctx.data as string);
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Invalid file data format: ${error instanceof Error ? error.message : "Invalid base64"}`,
+      };
     }
   }
 
@@ -252,7 +289,36 @@ export async function POST(request: NextRequest) {
     }
 
     const typedBody = body as ChatRequest;
-    const { input, messages, fileContext } = typedBody;
+    let { input, messages, fileContext } = typedBody;
+
+    // Sanitize user input
+    input = sanitizeInput(input);
+
+    // Sanitize message contents
+    messages = messages.map((msg) => ({
+      role: msg.role,
+      content: sanitizeInput(msg.content),
+    }));
+
+    // Sanitize file context if present
+    if (fileContext) {
+      if (fileContext.filename) {
+        fileContext.filename = sanitizeFilename(fileContext.filename);
+      }
+      if (fileContext.data && fileContext.type === "image") {
+        try {
+          fileContext.data = sanitizeBase64(fileContext.data);
+        } catch (error) {
+          console.error("Failed to sanitize image data:", error);
+          const [err, status] = createErrorResponse(
+            "Invalid image data format",
+            "INVALID_IMAGE_DATA",
+            400
+          );
+          return NextResponse.json(err, { status });
+        }
+      }
+    }
 
     // Quick environment check (startup validation already done)
     const API_KEY = process.env.GEMINI_API_KEY;

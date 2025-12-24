@@ -41,3 +41,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# test files
+jest.config.js
+jest.setup.js
+test-environment-validation.sh
+sanitize.test.ts
