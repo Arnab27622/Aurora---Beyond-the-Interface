@@ -3,6 +3,8 @@ export interface Message {
     role: "user" | "bot";
     content: string;
     isCached?: boolean;
+    responses?: string[]; // Multiple responses for bot messages
+    currentResponseIndex?: number; // Current response being displayed
 }
 
 export interface ChatSession {
@@ -19,6 +21,6 @@ export type FileContextType = {
 } | null;
 
 export interface SpeechRecognitionState {
-  isListening: boolean;
-  isAvailable: boolean;
+    isListening: boolean;
+    isAvailable: boolean;
 }

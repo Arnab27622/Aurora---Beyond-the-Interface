@@ -1,7 +1,7 @@
 import ReactMarkdown, { Components } from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Message } from "@/lib/types";
-import { Zap, RotateCcw } from "lucide-react";
+import { Zap, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatMessageProps {
@@ -10,6 +10,7 @@ interface ChatMessageProps {
     markdownComponents: Components;
     onRegenerate?: (messageId: number) => void;
     isRegenerating?: boolean;
+    onNavigateResponse?: (messageId: number, direction: 'prev' | 'next') => void;
 }
 
 export const ChatMessage = ({
@@ -17,7 +18,8 @@ export const ChatMessage = ({
     darkMode,
     markdownComponents,
     onRegenerate,
-    isRegenerating
+    isRegenerating,
+    onNavigateResponse
 }: ChatMessageProps) => {
     // Don't render the message if it's being regenerated (to avoid showing empty block)
     if (isRegenerating) {
@@ -54,22 +56,67 @@ export const ChatMessage = ({
                     Cached response
                 </div>
             )}
-            {message.role === "bot" && onRegenerate && (
-                <div className="mt-2 flex justify-start">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRegenerate(message.id)}
-                        disabled={isRegenerating}
-                        className={cn(
-                            "text-xs h-6 px-2 cursor-pointer",
-                            darkMode ? "text-gray-400 hover:text-black" : "text-gray-600 hover:text-gray-800"
-                        )}
-                        title="Regenerate response"
-                    >
-                        <RotateCcw className="h-3 w-3 mr-1" />
-                        Regenerate
-                    </Button>
+            {message.role === "bot" && (
+                <div className="mt-2 flex flex-col gap-2">
+                    {/* Response Navigation */}
+                    {message.responses && message.responses.length > 1 && (
+                        <div className="flex items-center justify-between gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onNavigateResponse?.(message.id, 'prev')}
+                                disabled={message.currentResponseIndex === 0}
+                                className={cn(
+                                    "text-xs h-6 px-1 cursor-pointer",
+                                    darkMode ? "text-gray-400 hover:text-black" : "text-gray-600 hover:text-gray-800"
+                                )}
+                                title="Previous response"
+                            >
+                                <ChevronLeft className="h-3 w-3" />
+                            </Button>
+
+                            <span className={cn(
+                                "text-xs",
+                                darkMode ? "text-gray-400" : "text-gray-600"
+                            )}>
+                                {message.currentResponseIndex !== undefined ? message.currentResponseIndex + 1 : 1} / {message.responses.length}
+                            </span>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onNavigateResponse?.(message.id, 'next')}
+                                disabled={message.currentResponseIndex === (message.responses.length - 1)}
+                                className={cn(
+                                    "text-xs h-6 px-1 cursor-pointer",
+                                    darkMode ? "text-gray-400 hover:text-black" : "text-gray-600 hover:text-gray-800"
+                                )}
+                                title="Next response"
+                            >
+                                <ChevronRight className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Regenerate Button */}
+                    {onRegenerate && (
+                        <div className="flex justify-start">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRegenerate(message.id)}
+                                disabled={isRegenerating}
+                                className={cn(
+                                    "text-xs h-6 px-2 cursor-pointer",
+                                    darkMode ? "text-gray-400 hover:text-black" : "text-gray-600 hover:text-gray-800"
+                                )}
+                                title="Regenerate response"
+                            >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Regenerate
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

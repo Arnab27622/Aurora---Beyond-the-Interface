@@ -180,7 +180,16 @@ export default function ChatbotPage() {
                 setMessages((prev) =>
                     prev.map((msg) =>
                         msg.id === botMessageId
-                            ? { ...msg, isCached: true }
+                            ? { ...msg, isCached: true, responses: [fullContent], currentResponseIndex: 0 }
+                            : msg
+                    )
+                );
+            } else {
+                // Initialize responses array for new messages
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === botMessageId
+                            ? { ...msg, responses: [fullContent], currentResponseIndex: 0 }
                             : msg
                     )
                 );
@@ -249,15 +258,26 @@ export default function ChatbotPage() {
 
             // Set cached flag after streaming completes
             isCachedResponse = isCached || false;
-            if (isCachedResponse) {
-                setMessages((prev) =>
-                    prev.map((msg) =>
-                        msg.id === botMessageId
-                            ? { ...msg, isCached: true }
-                            : msg
-                    )
-                );
-            }
+
+            // Store the new response in the responses array
+            setMessages((prev) =>
+                prev.map((msg) => {
+                    if (msg.id === botMessageId) {
+                        const currentResponses = msg.responses || [msg.content];
+                        const newResponses = [...currentResponses, fullContent];
+                        const newIndex = newResponses.length - 1;
+
+                        return {
+                            ...msg,
+                            content: fullContent,
+                            responses: newResponses,
+                            currentResponseIndex: newIndex,
+                            isCached: isCachedResponse
+                        };
+                    }
+                    return msg;
+                })
+            );
         } catch (err: any) {
             logError(err, 'Message regeneration');
             const errorMessage = {
@@ -273,6 +293,29 @@ export default function ChatbotPage() {
         } finally {
             setRegeneratingMessageId(null);
         }
+    };
+
+    const navigateResponse = (messageId: number, direction: 'prev' | 'next') => {
+        setMessages(prev => prev.map(msg => {
+            if (msg.id === messageId && msg.responses && msg.responses.length > 1) {
+                const currentIndex = msg.currentResponseIndex || 0;
+                let newIndex = currentIndex;
+
+                if (direction === 'prev' && currentIndex > 0) {
+                    newIndex = currentIndex - 1;
+                } else if (direction === 'next' && currentIndex < msg.responses.length - 1) {
+                    newIndex = currentIndex + 1;
+                }
+
+                return {
+                    ...msg,
+                    content: msg.responses[newIndex],
+                    currentResponseIndex: newIndex,
+                    isCached: false // Reset cached flag when navigating
+                };
+            }
+            return msg;
+        }));
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -432,6 +475,7 @@ export default function ChatbotPage() {
                                             markdownComponents={markdownComponents(darkMode)}
                                             onRegenerate={regenerateMessage}
                                             isRegenerating={regeneratingMessageId === msg.id}
+                                            onNavigateResponse={navigateResponse}
                                         />
                                     </ComponentErrorBoundary>
                                 ))}
