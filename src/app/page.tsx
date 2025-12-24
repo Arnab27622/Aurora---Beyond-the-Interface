@@ -34,7 +34,7 @@ export default function ChatbotPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
-    const { sendMessage: sendGeminiMessage, isConfigured } = useGemini();
+    const { sendMessage: sendGeminiMessage, streamMessage: sendGeminiStreamMessage, isConfigured } = useGemini();
     const {
         chatSessions,
         currentSessionId,
@@ -117,43 +117,80 @@ export default function ChatbotPage() {
             return;
         }
 
-        // Create user message with only the input text for display
         const displayContent = input.trim();
+        const userMessageId = messageId;
+        const botMessageId = messageId + 1;
+        
         const userMessage: Message = {
-            id: messageId,
+            id: userMessageId,
             role: "user",
             content: displayContent,
         };
 
-        const newMessageList = [...messages, userMessage];
-        setMessages(newMessageList);
+        setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setIsTyping(false);
-        setMessageId((id) => id + 1);
+        setMessageId((id) => id + 2); // Increment by 2 for user + bot
         setLoading(true);
 
         try {
-            const { response: botMessage, nextMessageId } = await sendGeminiMessage(
+            let fullContent = "";
+            let botMessageAdded = false;
+            let isCachedResponse = false;
+
+            const { response, isCached } = await sendGeminiStreamMessage(
                 displayContent,
-                newMessageList,
+                [...messages, userMessage],
                 fileContext,
-                messageId
+                userMessageId,
+                (chunk) => {
+                    // Add placeholder on first chunk only
+                    if (!botMessageAdded) {
+                        setMessages((prev) => [...prev, {
+                            id: botMessageId,
+                            role: "bot",
+                            content: chunk,
+                        }]);
+                        botMessageAdded = true;
+                    } else {
+                        // Update existing message with new content
+                        fullContent += chunk;
+                        setMessages((prev) =>
+                            prev.map((msg) =>
+                                msg.id === botMessageId
+                                    ? { ...msg, content: fullContent, isCached: isCachedResponse }
+                                    : msg
+                            )
+                        );
+                    }
+                }
             );
 
-            setMessages((prev) => [...prev, botMessage]);
-            setMessageId(nextMessageId);
+            // Set cached flag after streaming completes
+            isCachedResponse = isCached || false;
+            if (isCachedResponse) {
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === botMessageId
+                            ? { ...msg, isCached: true }
+                            : msg
+                    )
+                );
+            }
         } catch (err: any) {
             console.error("API Error:", err);
             const errorMessage: Message = {
-                id: messageId + 1,
+                id: botMessageId,
                 role: "bot",
                 content: `API Error: ${err.message || "Please check your API key and model configuration"}`,
             };
-            setMessages((prev) => [...prev, errorMessage]);
-            setMessageId((id) => id + 2);
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === botMessageId ? errorMessage : msg
+                ) || [...prev, errorMessage]
+            );
         } finally {
             setLoading(false);
-            // Clear file context after sending
             setFileContext(null);
         }
     };

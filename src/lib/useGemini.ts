@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
 import { responseCache } from "@/lib/cache";
+import { streamChatResponse, StreamEvent } from "@/lib/streaming";
 
 interface UseGeminiReturn {
   sendMessage: (
@@ -10,6 +11,13 @@ interface UseGeminiReturn {
     fileContext: FileContextType,
     messageId: number
   ) => Promise<{ response: Message; nextMessageId: number; isCached?: boolean }>;
+  streamMessage: (
+    input: string,
+    messages: Message[],
+    fileContext: FileContextType,
+    messageId: number,
+    onChunk: (text: string) => void
+  ) => Promise<{ response: string; isCached?: boolean }>;
   isConfigured: boolean;
   clearCache?: () => void;
 }
@@ -24,14 +32,12 @@ export function useGemini(): UseGeminiReturn {
       fileContext: FileContextType,
       messageId: number
     ) => {
-      // Sanitize input on client side before sending
       const sanitizedInput = sanitizeInput(input);
       const sanitizedMessages = messages.map((m) => ({
         role: m.role,
         content: sanitizeInput(m.content),
       }));
 
-      // Check if response is cached
       const cachedResponse = responseCache.get(sanitizedInput, fileContext);
       if (cachedResponse) {
         const botMessage: Message = {
@@ -71,7 +77,6 @@ export function useGemini(): UseGeminiReturn {
       const botText =
         data.content || "Sorry, I couldn't process that request.";
 
-      // Cache the response
       responseCache.set(sanitizedInput, botText, fileContext);
 
       const botMessage: Message = {
@@ -88,8 +93,58 @@ export function useGemini(): UseGeminiReturn {
     []
   );
 
+  const streamMessage = useCallback(
+    async (
+      input: string,
+      messages: Message[],
+      fileContext: FileContextType,
+      messageId: number,
+      onChunk: (text: string) => void
+    ) => {
+      const sanitizedInput = sanitizeInput(input);
+      const sanitizedMessages = messages.map((m) => ({
+        role: m.role,
+        content: sanitizeInput(m.content),
+      }));
+
+      const cachedResponse = responseCache.get(sanitizedInput, fileContext);
+      if (cachedResponse) {
+        onChunk(cachedResponse);
+        return {
+          response: cachedResponse,
+          isCached: true,
+        };
+      }
+
+      let fullResponse = "";
+      for await (const event of streamChatResponse(
+        sanitizedInput,
+        sanitizedMessages,
+        fileContext
+      )) {
+        if (event.error) {
+          throw new Error(event.error);
+        }
+        if (event.done) {
+          responseCache.set(sanitizedInput, fullResponse, fileContext);
+          break;
+        }
+        if (event.text) {
+          fullResponse += event.text;
+          onChunk(event.text);
+        }
+      }
+
+      return {
+        response: fullResponse,
+      };
+    },
+    []
+  );
+
   return {
     sendMessage,
+    streamMessage,
     isConfigured,
     clearCache: () => responseCache.clear(),
   };
