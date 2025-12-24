@@ -15,6 +15,7 @@ import { useChatSessions } from "@/lib/useChatSessions";
 import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import { ComponentErrorBoundary } from "@/components/errors/ComponentErrorBoundary";
 import { logError } from "@/lib/errorHandler";
+import { usePDFProcessing } from "@/lib/usePDFLoader";
 
 declare global {
     interface Window {
@@ -57,6 +58,9 @@ export default function ChatbotPage() {
         setInput,
         setIsTyping
     );
+
+    // Lazy load PDF processing when needed
+    const { processPDF } = usePDFProcessing(true);
 
     // Suggested prompts
     const [suggestedPrompts] = useState([
@@ -213,17 +217,21 @@ export default function ChatbotPage() {
         setIsFileLoading(true);
 
         try {
-            // Load PDF.js library dynamically
-            if (!window.pdfjsLib) {
-                await loadPdfJs();
+            // Lazy load PDF and extract text
+            const text = await processPDF(file);
+            if (text) {
+                setFileContext({
+                    type: "pdf",
+                    data: text,
+                    filename: file.name
+                });
+            } else {
+                setFileContext({
+                    type: "pdf",
+                    data: "[Failed to extract PDF content]",
+                    filename: file.name
+                });
             }
-
-            const text = await extractTextFromPDF(file);
-            setFileContext({
-                type: "pdf",
-                data: text.substring(0, 5000), // Limit to 5000 characters
-                filename: file.name
-            });
         } catch (error) {
             logError(error, 'PDF extraction');
             setFileContext({
@@ -279,51 +287,6 @@ export default function ChatbotPage() {
     // Clear file context
     const clearFileContext = () => {
         setFileContext(null);
-    };
-
-    // Load PDF.js from CDN
-    const loadPdfJs = (): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            if (window.pdfjsLib) {
-                window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-                    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-                resolve();
-                return;
-            }
-
-            const script = document.createElement("script");
-            script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
-            script.onload = () => {
-                window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-                    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-                resolve();
-            };
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
-    };
-
-    // Extract text from PDF
-    const extractTextFromPDF = async (file: File): Promise<string> => {
-        const arrayBuffer = await file.arrayBuffer();
-        const typedArray = new Uint8Array(arrayBuffer);
-        const pdf = await window.pdfjsLib.getDocument(typedArray).promise;
-        let extractedText = "";
-
-        // Limit to first 5 pages to prevent excessive processing
-        const pageLimit = Math.min(pdf.numPages, 5);
-
-        for (let i = 1; i <= pageLimit; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const strings = textContent.items.map((item: any) => item.str);
-            extractedText += strings.join(" ") + "\n";
-
-            // Stop if text is getting too long
-            if (extractedText.length > 5000) break;
-        }
-
-        return extractedText;
     };
 
     if (!isMounted || isLoading) {
