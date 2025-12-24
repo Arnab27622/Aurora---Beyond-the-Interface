@@ -266,6 +266,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(error, { status });
   }
 
+  // Check if streaming is requested
+  const url = new URL(request.url);
+  const isStreaming = url.searchParams.get("stream") === "true";
+
   try {
     let body: unknown;
     try {
@@ -393,7 +397,137 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    // Call Gemini API with timeout
+    // If streaming is requested, return SSE response
+    if (isStreaming) {
+      const encoder = new TextEncoder();
+      let fullResponse = "";
+
+      interface StreamChunk {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      }
+
+      async function* streamFromGemini(): AsyncGenerator<string> {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS + 30000);
+
+        try {
+          const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:streamGenerateContent?alt=sse&key=${API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+              }),
+              signal: controller.signal,
+            }
+          );
+
+          clearTimeout(timeoutId);
+
+          if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.error?.message || "API error");
+          }
+
+          if (!resp.body) throw new Error("No response body");
+
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines[lines.length - 1];
+
+            for (let i = 0; i < lines.length - 1; i++) {
+              const line = lines[i].trim();
+              if (!line || line.startsWith(":")) continue;
+
+              if (line.startsWith("data: ")) {
+                try {
+                  const chunk: StreamChunk = JSON.parse(line.slice(6));
+                  if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    yield chunk.candidates[0].content.parts[0].text;
+                  }
+                } catch (e) {
+                  continue;
+                }
+              }
+            }
+          }
+
+          if (buffer.trim().startsWith("data: ")) {
+            try {
+              const chunk: StreamChunk = JSON.parse(buffer.trim().slice(6));
+              if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
+                yield chunk.candidates[0].content.parts[0].text;
+              }
+            } catch (e) {
+              // Skip
+            }
+          }
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            // Check cache first
+            const { responseCache } = await import("@/lib/cache");
+            const cached = responseCache.get(input, fileContext);
+            if (cached) {
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ text: cached, cached: true })}\n\n`
+                )
+              );
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+              controller.close();
+              return;
+            }
+
+            for await (const chunk of streamFromGemini()) {
+              fullResponse += chunk;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`)
+              );
+            }
+
+            // Cache the response
+            const { responseCache: cache2 } = await import("@/lib/cache");
+            cache2.set(input, fullResponse, fileContext);
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+            controller.close();
+          } catch (error) {
+            console.error("Streaming error:", error);
+            const msg = error instanceof Error ? error.message : "Unknown error";
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`)
+            );
+            controller.close();
+          }
+        },
+      });
+
+      return new NextResponse(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Call Gemini API with timeout (non-streaming path)
     let response: Response;
     try {
       const controller = new AbortController();
@@ -411,7 +545,7 @@ export async function POST(request: NextRequest) {
             contents,
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 6000,
+              maxOutputTokens: 4096,
             },
           }),
           signal: controller.signal,

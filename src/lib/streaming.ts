@@ -1,6 +1,6 @@
 /**
- * Streaming response utility - simulated streaming using regular API
- * Chunks responses for better UX
+ * True streaming response utility using Server-Sent Events (SSE)
+ * Makes request to /api/chat with stream=true parameter
  */
 
 export interface StreamEvent {
@@ -10,14 +10,13 @@ export interface StreamEvent {
   error?: string;
 }
 
-// Simulate streaming by chunking text into words
 export async function* streamChatResponse(
   input: string,
   messages: Array<{ role: string; content: string }>,
   fileContext: any
 ): AsyncGenerator<StreamEvent, void, unknown> {
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/api/chat?stream=true", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,50 +29,71 @@ export async function* streamChatResponse(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       yield {
-        error: errorData.message || `HTTP ${response.status} Error`,
+        error: (errorData as any).message || `HTTP ${response.status} Error`,
       };
       return;
     }
 
-    const data = await response.json();
-    const fullContent = data.content || "";
-
-    if (!fullContent) {
-      yield { error: "No response content received" };
+    if (!response.body) {
+      yield { error: "No response body from server" };
       return;
     }
 
-    // Simulate streaming by yielding chunks
-    // Split by sentences or after N characters for better readability
-    const words = fullContent.split(/(\s+)/);
-    let chunk = "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
 
-    for (const word of words) {
-      chunk += word;
-      
-      // Yield after every 10 words or on punctuation
-      if (chunk.split(/\s+/).length >= 10 || /[.!?]\s*$/.test(chunk)) {
-        yield { text: chunk };
-        chunk = "";
-        // Add small delay to simulate streaming
-        await new Promise((resolve) => setTimeout(resolve, 10));
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+
+      // Keep the last incomplete line in the buffer
+      buffer = lines[lines.length - 1];
+
+      // Process complete lines
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i].trim();
+
+        // Skip empty lines and comments
+        if (!line || line.startsWith(":")) continue;
+
+        // Parse SSE data format
+        if (line.startsWith("data: ")) {
+          const jsonStr = line.slice(6);
+
+          try {
+            const event: StreamEvent = JSON.parse(jsonStr);
+            yield event;
+          } catch (e) {
+            // Skip invalid JSON, continue processing
+            continue;
+          }
+        }
       }
     }
 
-    // Yield remaining chunk
-    if (chunk.trim()) {
-      yield { text: chunk };
+    // Process any remaining data in buffer
+    if (buffer.trim() && buffer.trim().startsWith("data: ")) {
+      const jsonStr = buffer.trim().slice(6);
+      try {
+        const event: StreamEvent = JSON.parse(jsonStr);
+        yield event;
+      } catch (e) {
+        // Skip invalid JSON
+      }
     }
-
-    yield { done: true };
   } catch (error) {
     yield {
       error:
         error instanceof Error
           ? error.message
-          : "Failed to get response",
+          : "Failed to stream response",
     };
   }
 }
