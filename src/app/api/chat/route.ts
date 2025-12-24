@@ -411,7 +411,7 @@ export async function POST(request: NextRequest) {
             contents,
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 2048,
+              maxOutputTokens: 6000,
             },
           }),
           signal: controller.signal,
