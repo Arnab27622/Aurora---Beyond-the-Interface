@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import DynamicClasses from './DynamicClasses';
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 
 // Server-side environment validation on startup
 import '@/lib/serverStartup';
@@ -33,7 +34,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <DynamicClasses />
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );
