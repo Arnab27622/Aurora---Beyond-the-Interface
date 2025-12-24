@@ -28,6 +28,7 @@ interface ChatRequest {
     data: string;
     filename: string;
   } | null;
+  skipCache?: boolean;
 }
 
 interface ApiErrorResponse {
@@ -295,7 +296,7 @@ export async function POST(request: NextRequest) {
     }
 
     const typedBody = body as ChatRequest;
-    let { input, messages, fileContext } = typedBody;
+    let { input, messages, fileContext, skipCache } = typedBody;
 
     // Sanitize user input
     input = sanitizeInput(input);
@@ -480,18 +481,20 @@ export async function POST(request: NextRequest) {
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            // Check cache first
-            const { responseCache } = await import("@/lib/cache");
-            const cached = responseCache.get(input, fileContext);
-            if (cached) {
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ text: cached, cached: true })}\n\n`
-                )
-              );
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
-              controller.close();
-              return;
+            // Check cache first (skip if skipCache is true)
+            if (!skipCache) {
+              const { responseCache } = await import("@/lib/cache");
+              const cached = responseCache.get(input, fileContext);
+              if (cached) {
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ text: cached, cached: true })}\n\n`
+                  )
+                );
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+                controller.close();
+                return;
+              }
             }
 
             for await (const chunk of streamFromGemini()) {

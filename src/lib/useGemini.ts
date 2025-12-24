@@ -16,7 +16,8 @@ interface UseGeminiReturn {
     messages: Message[],
     fileContext: FileContextType,
     messageId: number,
-    onChunk: (text: string) => void
+    onChunk: (text: string) => void,
+    skipCache?: boolean
   ) => Promise<{ response: string; isCached?: boolean }>;
   isConfigured: boolean;
   clearCache?: () => void;
@@ -61,14 +62,14 @@ export function useGemini(): UseGeminiReturn {
           input: sanitizedInput,
           messages: sanitizedMessages,
           fileContext,
+          skipCache: false,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          `API error: ${response.status} ${
-            errorData.message || response.statusText
+          `API error: ${response.status} ${errorData.message || response.statusText
           }`
         );
       }
@@ -99,7 +100,8 @@ export function useGemini(): UseGeminiReturn {
       messages: Message[],
       fileContext: FileContextType,
       messageId: number,
-      onChunk: (text: string) => void
+      onChunk: (text: string) => void,
+      skipCache: boolean = false
     ) => {
       const sanitizedInput = sanitizeInput(input);
       const sanitizedMessages = messages.map((m) => ({
@@ -108,7 +110,7 @@ export function useGemini(): UseGeminiReturn {
       }));
 
       const cachedResponse = responseCache.get(sanitizedInput, fileContext);
-      if (cachedResponse) {
+      if (cachedResponse && !skipCache) {
         onChunk(cachedResponse);
         return {
           response: cachedResponse,
@@ -120,7 +122,8 @@ export function useGemini(): UseGeminiReturn {
       for await (const event of streamChatResponse(
         sanitizedInput,
         sanitizedMessages,
-        fileContext
+        fileContext,
+        skipCache
       )) {
         if (event.error) {
           throw new Error(event.error);

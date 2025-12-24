@@ -32,6 +32,7 @@ export default function ChatbotPage() {
     const [fileContext, setFileContext] = useState<FileContextType>(null);
     const [loading, setLoading] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [regeneratingMessageId, setRegeneratingMessageId] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -126,7 +127,7 @@ export default function ChatbotPage() {
         const displayContent = input.trim();
         const userMessageId = messageId;
         const botMessageId = messageId + 1;
-        
+
         const userMessage: Message = {
             id: userMessageId,
             role: "user",
@@ -199,6 +200,78 @@ export default function ChatbotPage() {
         } finally {
             setLoading(false);
             setFileContext(null);
+        }
+    };
+
+    const regenerateMessage = async (botMessageId: number) => {
+        if (loading || regeneratingMessageId !== null) return;
+
+        // Find the bot message and its corresponding user message
+        const botMessageIndex = messages.findIndex(msg => msg.id === botMessageId);
+        if (botMessageIndex === -1 || messages[botMessageIndex].role !== 'bot') return;
+
+        const userMessageIndex = botMessageIndex - 1;
+        if (userMessageIndex < 0 || messages[userMessageIndex].role !== 'user') return;
+
+        const userMessage = messages[userMessageIndex];
+        const previousMessages = messages.slice(0, userMessageIndex);
+
+        setRegeneratingMessageId(botMessageId);
+
+        try {
+            // Clear the existing bot message content
+            setMessages(prev => prev.map(msg =>
+                msg.id === botMessageId
+                    ? { ...msg, content: "", isCached: false }
+                    : msg
+            ));
+
+            let fullContent = "";
+            let isCachedResponse = false;
+
+            const { response, isCached } = await sendGeminiStreamMessage(
+                userMessage.content,
+                [...previousMessages, userMessage],
+                null, // fileContext is not preserved for regeneration
+                userMessage.id,
+                (chunk) => {
+                    fullContent += chunk;
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.id === botMessageId
+                                ? { ...msg, content: fullContent, isCached: isCachedResponse }
+                                : msg
+                        )
+                    );
+                },
+                true // skipCache: true for regeneration
+            );
+
+            // Set cached flag after streaming completes
+            isCachedResponse = isCached || false;
+            if (isCachedResponse) {
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === botMessageId
+                            ? { ...msg, isCached: true }
+                            : msg
+                    )
+                );
+            }
+        } catch (err: any) {
+            logError(err, 'Message regeneration');
+            const errorMessage = {
+                id: botMessageId,
+                role: "bot" as const,
+                content: `API Error: ${err.message || "Please check your API key and model configuration"}`,
+            };
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === botMessageId ? errorMessage : msg
+                )
+            );
+        } finally {
+            setRegeneratingMessageId(null);
         }
     };
 
@@ -357,11 +430,13 @@ export default function ChatbotPage() {
                                             message={msg}
                                             darkMode={darkMode}
                                             markdownComponents={markdownComponents(darkMode)}
+                                            onRegenerate={regenerateMessage}
+                                            isRegenerating={regeneratingMessageId === msg.id}
                                         />
                                     </ComponentErrorBoundary>
                                 ))}
 
-                                {loading && (
+                                {(loading || regeneratingMessageId !== null) && (
                                     <div className={cn(
                                         "py-2 px-4 rounded-md text-base w-fit animate-pulse",
                                         darkMode ? "bg-gray-600 text-white" : "bg-gray-300 text-black"
