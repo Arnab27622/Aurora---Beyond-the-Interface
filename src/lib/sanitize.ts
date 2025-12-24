@@ -29,8 +29,7 @@ export function sanitizeInput(input: string): string {
     // Remove data: protocol (used for embedded code)
     .replace(/data:text\/html/gi, "")
     // Remove style attributes with expressions
-    .replace(/style\s*=\s*["'].*?expression.*?["']/gi, "")
-    .trim();
+    .replace(/style\s*=\s*["'].*?expression.*?["']/gi, "");
 }
 
 /**
@@ -59,14 +58,32 @@ export function sanitizeFilename(filename: string): string {
  * Validate and sanitize base64 data (for images, PDFs)
  */
 export function sanitizeBase64(data: string): string {
-  if (typeof data !== "string") return "";
+  if (typeof data !== "string") {
+    throw new Error("Base64 data must be a string");
+  }
 
   // Remove whitespace first
-  const cleaned = data.replace(/\s/g, "");
+  let cleaned = data.replace(/\s/g, "");
+
+  if (cleaned.length === 0) {
+    throw new Error("Base64 data cannot be empty");
+  }
 
   // Check if it looks like base64 (only alphanumeric, +, /, =)
-  if (!/^[A-Za-z0-9+/=]*$/.test(cleaned)) {
-    throw new Error("Invalid base64 data");
+  if (!/^[A-Za-z0-9+/=-]*$/.test(cleaned)) {
+    throw new Error("Invalid base64 characters detected");
+  }
+
+  // Add padding if necessary (base64 length must be multiple of 4)
+  const remainder = cleaned.length % 4;
+  if (remainder !== 0) {
+    cleaned += "=".repeat(4 - remainder);
+  }
+
+  // Validate that only the last characters are padding
+  const paddingMatch = cleaned.match(/=+$/);
+  if (paddingMatch && paddingMatch[0].length > 2) {
+    throw new Error("Invalid base64 data: too much padding");
   }
 
   return cleaned;

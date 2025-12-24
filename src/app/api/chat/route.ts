@@ -10,7 +10,7 @@ import {
 // Constants for validation
 const MAX_INPUT_LENGTH = 10000;
 const MAX_FILENAME_LENGTH = 255;
-const MAX_FILE_DATA_LENGTH = 50000;
+const MAX_FILE_DATA_LENGTH = 5000000; // Increased from 50000 to support larger images (base64 ~1.33x file size)
 const MAX_MESSAGES = 100;
 const MAX_MESSAGE_LENGTH = 10000;
 const REQUEST_TIMEOUT_MS = 30000;
@@ -171,14 +171,16 @@ function validateFileContext(fileContext: unknown): {
       return { valid: false, error: "File data cannot be empty" };
     }
 
-    // Validate base64 data
-    try {
-      sanitizeBase64(ctx.data as string);
-    } catch (error) {
-      return {
-        valid: false,
-        error: `Invalid file data format: ${error instanceof Error ? error.message : "Invalid base64"}`,
-      };
+    // Only validate base64 format for images
+    if (ctx.type === "image") {
+      try {
+        sanitizeBase64(ctx.data as string);
+      } catch (error) {
+        return {
+          valid: false,
+          error: `Invalid file data format: ${error instanceof Error ? error.message : "Invalid base64"}`,
+        };
+      }
     }
   }
 

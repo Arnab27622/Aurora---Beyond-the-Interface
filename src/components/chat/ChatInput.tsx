@@ -136,10 +136,12 @@ export const ChatInput = ({
                 placeholder={fileContext ? "Ask about the file..." : "Ask anything or upload file"}
                 value={input}
                 onChange={(e) => {
+                    const value = e.target.value;
                     // Sanitize input in real-time
-                    const sanitized = sanitizeInput(e.target.value);
+                    const sanitized = sanitizeInput(value);
                     setInput(sanitized);
-                    setIsTyping(sanitized.length > 0);
+                    // Check if there's actual content (not just whitespace)
+                    setIsTyping(sanitized.trim().length > 0);
                 }}
                 onBlur={() => setIsTyping(false)}
                 onKeyDown={onKeyDown}
