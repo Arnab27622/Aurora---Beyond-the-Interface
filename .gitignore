@@ -48,3 +48,4 @@ jest.config.js
 jest.setup.js
 test-environment-validation.sh
 sanitize.test.ts
+cache.test.ts

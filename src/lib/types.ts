@@ -2,6 +2,7 @@ export interface Message {
     id: number;
     role: "user" | "bot";
     content: string;
+    isCached?: boolean;
 }
 
 export interface ChatSession {

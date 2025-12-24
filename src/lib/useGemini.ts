@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
+import { responseCache } from "@/lib/cache";
 
 interface UseGeminiReturn {
   sendMessage: (
@@ -8,8 +9,9 @@ interface UseGeminiReturn {
     messages: Message[],
     fileContext: FileContextType,
     messageId: number
-  ) => Promise<{ response: Message; nextMessageId: number }>;
+  ) => Promise<{ response: Message; nextMessageId: number; isCached?: boolean }>;
   isConfigured: boolean;
+  clearCache?: () => void;
 }
 
 export function useGemini(): UseGeminiReturn {
@@ -28,6 +30,23 @@ export function useGemini(): UseGeminiReturn {
         role: m.role,
         content: sanitizeInput(m.content),
       }));
+
+      // Check if response is cached
+      const cachedResponse = responseCache.get(sanitizedInput, fileContext);
+      if (cachedResponse) {
+        const botMessage: Message = {
+          id: messageId + 1,
+          role: "bot",
+          content: cachedResponse,
+          isCached: true,
+        };
+
+        return {
+          response: botMessage,
+          nextMessageId: messageId + 2,
+          isCached: true,
+        };
+      }
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -52,6 +71,9 @@ export function useGemini(): UseGeminiReturn {
       const botText =
         data.content || "Sorry, I couldn't process that request.";
 
+      // Cache the response
+      responseCache.set(sanitizedInput, botText, fileContext);
+
       const botMessage: Message = {
         id: messageId + 1,
         role: "bot",
@@ -69,5 +91,6 @@ export function useGemini(): UseGeminiReturn {
   return {
     sendMessage,
     isConfigured,
+    clearCache: () => responseCache.clear(),
   };
 }
