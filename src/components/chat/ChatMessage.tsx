@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Message } from "@/lib/types";
 import { Zap, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface ChatMessageProps {
     message: Message;
@@ -30,7 +31,7 @@ export const ChatMessage = ({
         <div
             key={message.id}
             className={cn(
-                "whitespace-pre-wrap py-3 px-4 mb-4 rounded-md w-fit break-words max-w-[90%]",
+                "whitespace-pre-wrap py-3 pl-4 pr-12 mb-4 rounded-md w-fit break-words max-w-[90%]",
                 "text-base relative",
                 message.role === "user"
                     ? darkMode
@@ -41,6 +42,7 @@ export const ChatMessage = ({
                         : "bg-[#f0f0f0] text-black self-start mr-auto"
             )}
         >
+            <CopyButton text={message.content} darkMode={darkMode} />
             <ReactMarkdown components={markdownComponents}>
                 {message.content}
             </ReactMarkdown>
