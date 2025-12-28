@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import DynamicClasses from './DynamicClasses';
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { AuthProvider } from "@/components/AuthProvider";
 
 // Server-side environment validation on startup
 import '@/lib/serverStartup';
@@ -33,10 +34,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <DynamicClasses />
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <AuthProvider>
+          <DynamicClasses />
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </AuthProvider>
       </body>
     </html>
   );

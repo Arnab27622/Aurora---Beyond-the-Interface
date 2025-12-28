@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+ import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatHistory } from "@/components/chat/ChatHistory";
 import { ChatMessage } from "@/components/chat/ChatMessage";
@@ -37,6 +39,9 @@ export default function ChatbotPage() {
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+
+    const { data: session, status } = useSession();
+    const router = useRouter();
 
     const { sendMessage: sendGeminiMessage, streamMessage: sendGeminiStreamMessage, isConfigured } = useGemini();
     const {
@@ -85,6 +90,14 @@ export default function ChatbotPage() {
     useEffect(() => {
         localStorage.setItem("darkMode", darkMode.toString());
     }, [darkMode]);
+
+    // Authentication check
+    useEffect(() => {
+        if (status === 'loading') return; // Still loading
+        if (!session) {
+            router.push('/auth/signin');
+        }
+    }, [session, status, router]);
 
     // Wrap hook functions to also clear UI state
     const handleNewChat = () => {
@@ -405,7 +418,7 @@ export default function ChatbotPage() {
         setFileContext(null);
     };
 
-    if (!isMounted || isLoading) {
+    if (!isMounted || isLoading || status === 'loading') {
         return (
             <div
                 className={cn(
@@ -416,6 +429,10 @@ export default function ChatbotPage() {
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
+    }
+
+    if (!session) {
+        return null; // Will redirect via useEffect
     }
 
     return (
