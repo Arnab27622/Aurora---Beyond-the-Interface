@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function SignUp() {
     const [name, setName] = useState('');
@@ -15,6 +18,7 @@ export default function SignUp() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { darkMode, setDarkMode } = useTheme();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -63,78 +67,109 @@ export default function SignUp() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>Sign Up</CardTitle>
-                    <CardDescription>
-                        Create a new account to get started
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium mb-1">
-                                Name
-                            </label>
-                            <Input
-                                id="name"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                            />
+        <div className={cn(
+            "flex flex-col h-screen",
+            darkMode ? "bg-[#1e1e1e] text-white" : "bg-white text-black"
+        )}>
+            <ChatHeader
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+                isAuthPage={true}
+            />
+            <div className="flex-grow flex items-center justify-center py-6">
+                <div className="w-full max-w-md px-4">
+                    <div className={cn(
+                        "w-full rounded-xl border p-6 shadow-sm",
+                        darkMode ? "bg-[#2A2A2A] border-[#2A2A2A]" : "bg-gray-50 border-gray-200"
+                    )}>
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-semibold mb-2">Sign Up</h2>
+                            <p className={cn(
+                                "text-sm",
+                                darkMode ? "text-gray-300" : "text-gray-600"
+                            )}>
+                                Create a new account to get started
+                            </p>
                         </div>
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium mb-1">
-                                Email
-                            </label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium mb-1">
+                                    Name
+                                </label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    className={cn(
+                                        darkMode ? "bg-[#454343] border-[#2A2A2A]" : "bg-white border-gray-300"
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium mb-1">
+                                    Email
+                                </label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    className={cn(
+                                        darkMode ? "bg-[#454343] border-[#2A2A2A]" : "bg-white border-gray-300"
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium mb-1">
+                                    Password
+                                </label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className={cn(
+                                        darkMode ? "bg-[#454343] border-[#2A2A2A]" : "bg-white border-gray-300"
+                                    )}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                                    Confirm Password
+                                </label>
+                                <Input
+                                    id="confirmPassword"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    className={cn(
+                                        darkMode ? "bg-[#454343] border-[#2A2A2A]" : "bg-white border-gray-300"
+                                    )}
+                                />
+                            </div>
+                            {error && (
+                                <div className="text-red-500 text-sm">{error}</div>
+                            )}
+                            <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
+                                {loading ? 'Creating account...' : 'Sign Up'}
+                            </Button>
+                        </form>
+                        <div className="mt-4 text-center">
+                            <Link href="/auth/signin" className={cn(
+                                "text-sm hover:underline",
+                                darkMode ? "text-blue-400" : "text-blue-600"
+                            )}>
+                                Already have an account? Sign in
+                            </Link>
                         </div>
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium mb-1">
-                                Password
-                            </label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
-                                Confirm Password
-                            </label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        {error && (
-                            <div className="text-red-500 text-sm">{error}</div>
-                        )}
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? 'Creating account...' : 'Sign Up'}
-                        </Button>
-                    </form>
-                    <div className="mt-4 text-center">
-                        <Link href="/auth/signin" className="text-sm text-blue-600 hover:underline">
-                            Already have an account? Sign in
-                        </Link>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

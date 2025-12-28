@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface ChatHeaderProps {
     darkMode: boolean;
     setDarkMode: (mode: boolean) => void;
-    clearChat: () => void;
-    showHistory: boolean;
-    setShowHistory: (show: boolean) => void;
+    clearChat?: () => void;
+    showHistory?: boolean;
+    setShowHistory?: (show: boolean) => void;
+    isAuthPage?: boolean;
 }
 
 export const ChatHeader = ({
@@ -16,6 +17,7 @@ export const ChatHeader = ({
     clearChat,
     showHistory,
     setShowHistory,
+    isAuthPage = false,
 }: ChatHeaderProps) => (
     <div
         className={cn(
@@ -24,34 +26,38 @@ export const ChatHeader = ({
         )}
     >
         <div className="flex items-center gap-3">
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowHistory(!showHistory)}
-                className={cn(
-                    "md:hidden cursor-pointer",
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                )}
-            >
-                {showHistory ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            {!isAuthPage && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowHistory?.(!showHistory)}
+                    className={cn(
+                        "md:hidden cursor-pointer",
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+                    )}
+                >
+                    {showHistory ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
+            )}
             <h1 className="text-xl font-semibold">Aurora - Beyond the Interface</h1>
         </div>
 
         <div className="flex items-center gap-3">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={clearChat}
-                className={cn(
-                    "cursor-pointer",
-                    darkMode
-                        ? "border-gray-500 bg-transparent hover:bg-white text-white"
-                        : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
-                )}
-            >
-                <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isAuthPage && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearChat}
+                    className={cn(
+                        "cursor-pointer",
+                        darkMode
+                            ? "border-gray-500 bg-transparent hover:bg-white text-white"
+                            : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
+                    )}
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            )}
 
             <Button
                 variant="outline"

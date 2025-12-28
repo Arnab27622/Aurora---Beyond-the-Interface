@@ -5,6 +5,7 @@ import DynamicClasses from './DynamicClasses';
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { AuthProvider } from "@/components/AuthProvider";
 
+import { ThemeProvider } from "@/components/ThemeProvider";
 // Server-side environment validation on startup
 import '@/lib/serverStartup';
 
@@ -35,10 +36,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <DynamicClasses />
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <ThemeProvider>
+            <DynamicClasses />
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

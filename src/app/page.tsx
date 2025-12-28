@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
- import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatHistory } from "@/components/chat/ChatHistory";
@@ -18,6 +18,7 @@ import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import { ComponentErrorBoundary } from "@/components/errors/ComponentErrorBoundary";
 import { logError } from "@/lib/errorHandler";
 import { usePDFProcessing } from "@/lib/usePDFLoader";
+import { useTheme } from "@/components/ThemeProvider";
 
 declare global {
     interface Window {
@@ -27,7 +28,7 @@ declare global {
 
 export default function ChatbotPage() {
     const [isMounted, setIsMounted] = useState(false);
-    const [darkMode, setDarkMode] = useState(true);
+    const { darkMode, setDarkMode } = useTheme();
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isFileLoading, setIsFileLoading] = useState(false);
