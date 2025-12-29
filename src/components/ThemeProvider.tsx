@@ -22,14 +22,13 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-    const [darkMode, setDarkMode] = useState(true);
-
-    useEffect(() => {
-        const savedDarkMode = localStorage.getItem('darkMode');
-        if (savedDarkMode !== null) {
-            setDarkMode(savedDarkMode === 'true');
+    const [darkMode, setDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const savedDarkMode = localStorage.getItem('darkMode');
+            return savedDarkMode !== null ? savedDarkMode === 'true' : true;
         }
-    }, []);
+        return true;
+    });
 
     useEffect(() => {
         localStorage.setItem('darkMode', darkMode.toString());

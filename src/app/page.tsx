@@ -87,11 +87,6 @@ export default function ChatbotPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Save dark mode preference to localStorage
-    useEffect(() => {
-        localStorage.setItem("darkMode", darkMode.toString());
-    }, [darkMode]);
-
     // Authentication check
     useEffect(() => {
         if (status === 'loading') return; // Still loading
