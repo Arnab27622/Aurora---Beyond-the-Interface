@@ -56,6 +56,7 @@ export default function ChatbotPage() {
         loadChat,
         deleteSession,
         clearChat,
+        refreshSessions,
         setMessages,
         setMessageId,
         setCurrentSessionId,
@@ -131,6 +132,36 @@ export default function ChatbotPage() {
             setMessages((prev) => [...prev, errorMessage]);
             setMessageId((id) => id + 2);
             return;
+        }
+
+        // Create a new chat session if none exists
+        if (!currentSessionId) {
+            try {
+                const title = input.trim().substring(0, 30) + (input.trim().length > 30 ? "..." : "") || "New Chat";
+                const response = await fetch("/api/chat-sessions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        title,
+                        messages: [],
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setCurrentSessionId(data.session.id);
+                    // Refresh sessions to update the sidebar immediately
+                    await refreshSessions();
+                } else {
+                    console.error("Failed to create chat session");
+                    return;
+                }
+            } catch (error) {
+                console.error("Error creating chat session:", error);
+                return;
+            }
         }
 
         const displayContent = input.trim();

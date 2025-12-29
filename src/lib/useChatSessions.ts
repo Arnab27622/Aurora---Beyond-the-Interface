@@ -12,6 +12,7 @@ interface UseChatSessionsReturn {
   loadChat: (sessionId: string, onHistoryClose?: () => void) => Promise<void>;
   deleteSession: (sessionId: string, e: React.MouseEvent) => Promise<void>;
   clearChat: () => Promise<void>;
+  refreshSessions: () => Promise<void>;
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setMessageId: (id: number | ((prev: number) => number)) => void;
   setCurrentSessionId: (id: string | null) => void;
@@ -188,6 +189,23 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
     [currentSessionId, userId]
   );
 
+  // Refresh chat sessions from database
+  const refreshSessions = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch("/api/chat-sessions");
+      if (!response.ok) {
+        throw new Error("Failed to fetch chat sessions");
+      }
+
+      const data = await response.json();
+      setChatSessions(data.sessions || []);
+    } catch (error) {
+      console.error("Error refreshing chat sessions:", error);
+    }
+  }, [userId]);
+
   // Clear current chat
   const clearChat = useCallback(async () => {
     if (!userId || !currentSessionId) return;
@@ -219,6 +237,7 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
     loadChat,
     deleteSession,
     clearChat,
+    refreshSessions,
     setMessages,
     setMessageId,
     setCurrentSessionId,
