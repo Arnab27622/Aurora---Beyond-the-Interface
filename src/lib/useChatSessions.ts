@@ -8,16 +8,16 @@ interface UseChatSessionsReturn {
   messageId: number;
   isLoading: boolean;
   hasHydrated: boolean;
-  newChat: () => void;
-  loadChat: (sessionId: string, onHistoryClose?: () => void) => void;
-  deleteSession: (sessionId: string, e: React.MouseEvent) => void;
-  clearChat: () => void;
+  newChat: () => Promise<void>;
+  loadChat: (sessionId: string, onHistoryClose?: () => void) => Promise<void>;
+  deleteSession: (sessionId: string, e: React.MouseEvent) => Promise<void>;
+  clearChat: () => Promise<void>;
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setMessageId: (id: number | ((prev: number) => number)) => void;
   setCurrentSessionId: (id: string | null) => void;
 }
 
-export function useChatSessions(): UseChatSessionsReturn {
+export function useChatSessions(userId?: string): UseChatSessionsReturn {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,141 +25,188 @@ export function useChatSessions(): UseChatSessionsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [hasHydrated, setHasHydrated] = useState(false);
 
-  // Hydrate state from localStorage on mount
+  // Load chat sessions from database when userId changes
   useEffect(() => {
-    const savedSessions = localStorage.getItem("chatSessions");
-    const savedCurrentSession = localStorage.getItem("currentSessionId");
-    const savedMessages = localStorage.getItem("chatMessages");
-
-    let initialSessions: ChatSession[] = [];
-    let initialMessages: Message[] = [];
-    let initialSessionId: string | null = null;
-    let nextMessageId = 1;
-
-    try {
-      if (savedSessions) {
-        initialSessions = JSON.parse(savedSessions);
-      }
-
-      if (savedCurrentSession) {
-        initialSessionId = savedCurrentSession;
-        const session = initialSessions.find((s) => s.id === savedCurrentSession);
-        if (session) {
-          initialMessages = session.messages;
-          nextMessageId = Math.max(...session.messages.map((m) => m.id), 0) + 1;
-        }
-      } else if (savedMessages) {
-        initialMessages = JSON.parse(savedMessages);
-        if (initialMessages.length > 0) {
-          nextMessageId = Math.max(...initialMessages.map((m) => m.id), 0) + 1;
-        }
-      }
-    } catch (e) {
-      console.error("Error parsing localStorage data:", e);
+    if (!userId) {
+      setChatSessions([]);
+      setMessages([]);
+      setMessageId(1);
+      setCurrentSessionId(null);
+      setHasHydrated(true);
+      setIsLoading(false);
+      return;
     }
 
-    setChatSessions(initialSessions);
-    setMessages(initialMessages);
-    setMessageId(nextMessageId);
-    setCurrentSessionId(initialSessionId);
-    setHasHydrated(true);
-    setIsLoading(false);
-  }, []);
+    const loadChatSessions = async () => {
+      try {
+        const response = await fetch("/api/chat-sessions");
+        if (!response.ok) {
+          throw new Error("Failed to fetch chat sessions");
+        }
 
-  // Save state to localStorage whenever it changes
+        const data = await response.json();
+        setChatSessions(data.sessions || []);
+      } catch (error) {
+        console.error("Error loading chat sessions:", error);
+        setChatSessions([]);
+      } finally {
+        setHasHydrated(true);
+        setIsLoading(false);
+      }
+    };
+
+    loadChatSessions();
+  }, [userId]);
+
+  // Save current session to database when messages change
   useEffect(() => {
-    if (!hasHydrated) return;
+    if (!hasHydrated || !currentSessionId || !userId || messages.length === 0) return;
 
-    localStorage.setItem("chatSessions", JSON.stringify(chatSessions));
+    const saveSession = async () => {
+      try {
+        const title = messages[0]?.content.substring(0, 30) + (messages[0]?.content.length > 30 ? "..." : "") || "New Chat";
 
-    if (currentSessionId) {
-      localStorage.setItem("currentSessionId", currentSessionId);
-      localStorage.removeItem("chatMessages");
-    } else {
-      localStorage.setItem("chatMessages", JSON.stringify(messages));
-      localStorage.removeItem("currentSessionId");
-    }
-  }, [messages, chatSessions, currentSessionId, hasHydrated]);
+        const response = await fetch("/api/chat-sessions", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            messages,
+          }),
+        });
 
-  // Update existing session when messages change
-  useEffect(() => {
-    if (!hasHydrated || !currentSessionId) return;
+        if (!response.ok) {
+          throw new Error("Failed to save chat session");
+        }
 
-    setChatSessions((prev) =>
-      prev.map((session) =>
-        session.id === currentSessionId
-          ? { ...session, messages, timestamp: Date.now() }
-          : session
-      )
-    );
-  }, [messages, currentSessionId, hasHydrated]);
+        // Update the session in local state
+        setChatSessions(prev =>
+          prev.map(session =>
+            session.id === currentSessionId
+              ? { ...session, messages, timestamp: Date.now() }
+              : session
+          )
+        );
+      } catch (error) {
+        console.error("Error saving chat session:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(saveSession, 500); // Debounce saves
+    return () => clearTimeout(timeoutId);
+  }, [messages, currentSessionId, userId, hasHydrated]);
 
   // Create new chat session
-  const newChat = useCallback(() => {
+  const newChat = useCallback(async (): Promise<void> => {
+    if (!userId) return;
+
+    // Save current session if it has messages
     if (!currentSessionId && messages.length > 0) {
-      const title =
-        messages[0].content.substring(0, 30) +
-        (messages[0].content.length > 30 ? "..." : "");
+      try {
+        const title = messages[0].content.substring(0, 30) +
+          (messages[0].content.length > 30 ? "..." : "");
 
-      const newSession: ChatSession = {
-        id: Date.now().toString(),
-        title,
-        timestamp: Date.now(),
-        messages: [...messages],
-      };
+        const response = await fetch("/api/chat-sessions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            messages: [...messages],
+          }),
+        });
 
-      setChatSessions((prev) => [newSession, ...prev]);
+        if (response.ok) {
+          const data = await response.json();
+          setChatSessions(prev => [data.session, ...prev]);
+        }
+      } catch (error) {
+        console.error("Error saving new session:", error);
+      }
     }
 
     setMessages([]);
     setMessageId(1);
     setCurrentSessionId(null);
-  }, [currentSessionId, messages]);
+  }, [currentSessionId, messages, userId]);
 
   // Load chat session
   const loadChat = useCallback(
-    (sessionId: string, onHistoryClose?: () => void) => {
-      const session = chatSessions.find((s) => s.id === sessionId);
-      if (session) {
-        setMessages(session.messages);
-        setCurrentSessionId(sessionId);
+    async (sessionId: string, onHistoryClose?: () => void) => {
+      if (!userId) return;
 
-        const maxId = Math.max(...session.messages.map((m) => m.id), 0);
-        setMessageId(maxId + 1);
+      try {
+        // Find the session in the current chatSessions state
+        const session = chatSessions.find(s => s.id === sessionId);
 
-        if (window.innerWidth < 768 && onHistoryClose) {
-          onHistoryClose();
+        if (session) {
+          setMessages(session.messages);
+          setCurrentSessionId(sessionId);
+
+          const maxId = Math.max(...session.messages.map((m: Message) => m.id), 0);
+          setMessageId(maxId + 1);
+
+          if (window.innerWidth < 768 && onHistoryClose) {
+            onHistoryClose();
+          }
         }
+      } catch (error) {
+        console.error("Error loading chat session:", error);
       }
     },
-    [chatSessions]
+    [userId, chatSessions]
   );
 
   // Delete chat session
   const deleteSession = useCallback(
-    (sessionId: string, e: React.MouseEvent) => {
+    async (sessionId: string, e: React.MouseEvent) => {
+      if (!userId) return;
+
       e.stopPropagation();
 
-      setChatSessions((prev) => prev.filter((session) => session.id !== sessionId));
+      try {
+        const response = await fetch(`/api/chat-sessions?sessionId=${sessionId}`, {
+          method: "DELETE",
+        });
 
-      if (currentSessionId === sessionId) {
+        if (response.ok) {
+          setChatSessions(prev => prev.filter(session => session.id !== sessionId));
+
+          if (currentSessionId === sessionId) {
+            setMessages([]);
+            setMessageId(1);
+            setCurrentSessionId(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting chat session:", error);
+      }
+    },
+    [currentSessionId, userId]
+  );
+
+  // Clear current chat
+  const clearChat = useCallback(async () => {
+    if (!userId || !currentSessionId) return;
+
+    try {
+      const response = await fetch(`/api/chat-sessions?sessionId=${currentSessionId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setChatSessions(prev => prev.filter(s => s.id !== currentSessionId));
         setMessages([]);
         setMessageId(1);
         setCurrentSessionId(null);
       }
-    },
-    [currentSessionId]
-  );
-
-  // Clear current chat
-  const clearChat = useCallback(() => {
-    if (currentSessionId) {
-      setChatSessions((prev) => prev.filter((s) => s.id !== currentSessionId));
+    } catch (error) {
+      console.error("Error clearing chat:", error);
     }
-    setMessages([]);
-    setMessageId(1);
-    setCurrentSessionId(null);
-  }, [currentSessionId]);
+  }, [currentSessionId, userId]);
 
   return {
     chatSessions,

@@ -59,7 +59,7 @@ export default function ChatbotPage() {
         setMessages,
         setMessageId,
         setCurrentSessionId,
-    } = useChatSessions();
+    } = useChatSessions(session?.user?.id);
 
     const { isListening, speechSupported, toggleSpeechRecognition } = useSpeechRecognition(
         setInput,
@@ -96,23 +96,23 @@ export default function ChatbotPage() {
     }, [session, status, router]);
 
     // Wrap hook functions to also clear UI state
-    const handleNewChat = () => {
-        newChat();
+    const handleNewChat = async () => {
+        await newChat();
         setShowHistory(false);
         setInput("");
         setIsTyping(false);
         setFileContext(null);
     };
 
-    const handleLoadChat = (sessionId: string) => {
-        loadChat(sessionId, () => setShowHistory(false));
+    const handleLoadChat = async (sessionId: string) => {
+        await loadChat(sessionId, () => setShowHistory(false));
         setInput("");
         setIsTyping(false);
         setFileContext(null);
     };
 
-    const handleClearChat = () => {
-        clearChat();
+    const handleClearChat = async () => {
+        await clearChat();
         setShowHistory(false);
         setInput("");
         setIsTyping(false);
