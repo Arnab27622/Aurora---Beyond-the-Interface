@@ -463,6 +463,7 @@ export default function ChatbotPage() {
                             newChat={handleNewChat}
                             loadChat={handleLoadChat}
                             deleteSession={deleteSession}
+                            userName={session?.user?.name}
                         />
                     </ComponentErrorBoundary>
 
