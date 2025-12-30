@@ -82,7 +82,7 @@ export const ChatHistory = ({
                     <div className="flex-1 flex flex-col">
                         <div
                             className={cn(
-                                "p-4 border-b",
+                                "p-4 border-b hidden md:block",
                                 darkMode ? "border-gray-700" : "border-gray-200"
                             )}
                         >
