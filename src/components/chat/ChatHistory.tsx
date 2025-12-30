@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Menu, X, Settings } from "lucide-react";
+import { Plus, Trash2, Menu, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession } from "@/lib/types";
 import { signOut } from "next-auth/react";
@@ -82,39 +82,64 @@ export const ChatHistory = ({
                     <div className="flex-1 flex flex-col">
                         <div
                             className={cn(
-                                "p-4 flex justify-between items-center border-b",
+                                "p-4 border-b",
                                 darkMode ? "border-gray-700" : "border-gray-200"
                             )}
                         >
-                            <div className="flex items-center">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setShowHistory(false)}
-                                    className={cn(
-                                        "mr-2 cursor-pointer",
-                                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                                    )}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                                <h2 className="font-semibold">Chat History</h2>
-                            </div>
                             <Button
-                                onClick={newChat}
-                                size="sm"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowHistory(false)}
                                 className={cn(
                                     "cursor-pointer",
-                                    darkMode
-                                        ? "bg-blue-600 hover:bg-blue-700"
-                                        : "bg-blue-500 hover:bg-blue-600"
+                                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                                 )}
                             >
-                                <Plus className="h-4 w-4 mr-1" /> New
+                                <Menu className="h-5 w-5" />
                             </Button>
                         </div>
 
+                        <div className="p-2">
+                            <Button
+                                onClick={newChat}
+                                variant="ghost"
+                                className={cn(
+                                    "w-full flex items-center justify-start p-3 mb-2 cursor-pointer",
+                                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+                                )}
+                            >
+                                <Plus className="h-5 w-5 mr-3" />
+                                <span
+                                    className={cn(
+                                        "transition-opacity duration-300",
+                                        showHistory ? "opacity-100" : "opacity-0"
+                                    )}
+                                >
+                                    New Chat
+                                </span>
+                            </Button>
+                            < Button
+                                onClick={() => setShowSettings(true)}
+                                variant="ghost"
+                                className={cn(
+                                    "w-full flex items-center justify-start p-3 mb-2 cursor-pointer",
+                                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+                                )}
+                            >
+                                <Settings className="h-5 w-5 mr-3" />
+                                <span
+                                    className={cn(
+                                        "transition-opacity duration-300",
+                                        showHistory ? "opacity-100" : "opacity-0"
+                                    )}
+                                >
+                                    Settings
+                                </span>
+                            </ Button>
+                        </div>
+
                         <div className="flex-1 overflow-y-auto p-2">
+                            <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
                             {chatSessions.length === 0 ? (
                                 <div
                                     className={cn(
@@ -161,9 +186,9 @@ export const ChatHistory = ({
                                 ))
                             )}
                         </div>
-                    </div>
+                    </div >
                 )}
-            </div>
+            </div >
 
             {/* Settings Popup */}
             {
