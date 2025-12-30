@@ -8,7 +8,7 @@ import { ChatHistory } from "@/components/chat/ChatHistory";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { FileContextIndicator } from "@/components/chat/FileContextIndicator";
-import { SuggestedPrompts } from "@/components/chat/SuggestedPrompts";
+
 import { markdownComponents } from "@/components/chat/markdown-components";
 import { Message, FileContextType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -70,15 +70,7 @@ export default function ChatbotPage() {
     // Lazy load PDF processing when needed
     const { processPDF } = usePDFProcessing(true);
 
-    // Suggested prompts
-    const [suggestedPrompts] = useState([
-        "Explain quantum computing in simple terms",
-        "How do I center a div in CSS?",
-        "Write a Python function to calculate factorial",
-        "What's the difference between React and Vue?",
-        "How to implement authentication in Next.js?",
-        "Explain closures in JavaScript",
-    ]);
+
 
     useEffect(() => {
         setIsMounted(true);
@@ -494,22 +486,12 @@ export default function ChatbotPage() {
                     </ComponentErrorBoundary>
 
                     <div className="flex-1 flex flex-col">
-                        <div className="flex-grow overflow-y-auto py-6">
+                        <div className="flex-grow overflow-y-auto py-6 relative">
                             <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto px-4">
                                 {messages.length === 0 && !loading && (
-                                    <ComponentErrorBoundary componentName="SuggestedPrompts">
-                                        <SuggestedPrompts
-                                            suggestedPrompts={suggestedPrompts}
-                                            onSelectPrompt={(prompt) => {
-                                                setInput(prompt);
-                                                setTimeout(() => {
-                                                    const inputEl = document.querySelector("input");
-                                                    inputEl?.focus();
-                                                }, 100);
-                                            }}
-                                            darkMode={darkMode}
-                                        />
-                                    </ComponentErrorBoundary>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-normal text-center">What can I help with?</h2>
+                                    </div>
                                 )}
 
                                 {messages.map((msg) => (

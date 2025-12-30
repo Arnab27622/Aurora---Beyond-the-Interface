@@ -38,7 +38,7 @@ export const ChatHistory = ({
         <>
             <div
                 className={cn(
-                    "absolute md:relative z-10 h-full w-64 flex flex-col border-r transition-transform duration-300",
+                    "absolute md:relative z-10 h-full w-64 flex flex-col border-r transition-all duration-300 ease-in-out",
                     darkMode ? "bg-[#252526] border-gray-700" : "bg-gray-100 border-gray-200",
                     showHistory ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-12",
                     !showHistory && "md:border-r-0"
