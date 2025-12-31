@@ -150,8 +150,9 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
           const maxId = Math.max(...session.messages.map((m: Message) => m.id), 0);
           setMessageId(maxId + 1);
 
+          // Delay sidebar closing to prevent layout shift during message loading
           if (window.innerWidth < 768 && onHistoryClose) {
-            onHistoryClose();
+            setTimeout(() => onHistoryClose(), 100);
           }
         }
       } catch (error) {

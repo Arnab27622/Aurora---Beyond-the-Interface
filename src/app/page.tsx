@@ -37,6 +37,7 @@ export default function ChatbotPage() {
     const [loading, setLoading] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [regeneratingMessageId, setRegeneratingMessageId] = useState<number | null>(null);
+    const [isLoadingChat, setIsLoadingChat] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,9 +79,15 @@ export default function ChatbotPage() {
         setIsMounted(true);
     }, []);
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    // useEffect(() => {
+    //     if (!isLoadingChat) {
+    //         // Delay scrolling to allow layout to stabilize
+    //         const timeoutId = setTimeout(() => {
+    //             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    //         }, 150);
+    //         return () => clearTimeout(timeoutId);
+    //     }
+    // }, [messages, isLoadingChat]);
 
     // Authentication check
     useEffect(() => {
@@ -92,18 +99,33 @@ export default function ChatbotPage() {
 
     // Wrap hook functions to also clear UI state
     const handleNewChat = async () => {
+        setIsLoadingChat(true);
         await newChat();
         setShowHistory(false);
         setInput("");
         setIsTyping(false);
         setFileContext(null);
+        setIsLoadingChat(false);
     };
 
     const handleLoadChat = async (sessionId: string) => {
+        // Save current scroll position
+        const scrollContainer = messagesEndRef.current?.parentElement?.parentElement;
+        const savedScrollTop = scrollContainer?.scrollTop || 0;
+
+        setIsLoadingChat(true);
         await loadChat(sessionId, () => setShowHistory(false));
         setInput("");
         setIsTyping(false);
         setFileContext(null);
+
+        // Restore scroll position after a brief delay to allow layout to stabilize
+        setTimeout(() => {
+            if (scrollContainer) {
+                scrollContainer.scrollTop = savedScrollTop;
+            }
+            setIsLoadingChat(false);
+        }, 100);
     };
 
     const handleClearChat = async () => {
@@ -166,6 +188,7 @@ export default function ChatbotPage() {
             id: userMessageId,
             role: "user",
             content: displayContent,
+            file: fileContext || undefined,
         };
 
         setMessages((prev) => [...prev, userMessage]);

@@ -2,6 +2,7 @@ export interface Message {
     id: number;
     role: "user" | "bot";
     content: string;
+    file?: FileContextType; // Attached file for user messages
     isCached?: boolean;
     responses?: string[]; // Multiple responses for bot messages
     currentResponseIndex?: number; // Current response being displayed

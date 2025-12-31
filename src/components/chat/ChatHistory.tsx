@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2, Menu, Settings, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession, SearchResult } from "@/lib/types";
@@ -203,131 +204,133 @@ export const ChatHistory = ({
                             </ Button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-2">
-                            <div className="mb-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        ref={setSearchInputRef}
-                                        type="text"
-                                        placeholder="Search chats"
-                                        value={searchQuery}
-                                        onChange={(e) => {
-                                            setSearchQuery(e.target.value);
-                                            handleSearch(e.target.value);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                handleSearch(searchQuery);
-                                            }
-                                        }}
-                                        className={cn(
-                                            "pl-10 pr-10",
-                                            darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
-                                        )}
-                                    />
-                                    {searchQuery && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                setSearchQuery("");
-                                                setSearchResults([]);
-                                            }}
-                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 cursor-pointer"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
+                        <div className="p-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    ref={setSearchInputRef}
+                                    type="text"
+                                    placeholder="Search chats"
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        handleSearch(e.target.value);
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch(searchQuery);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "pl-10 pr-10",
+                                        darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
                                     )}
-                                </div>
+                                />
+                                {searchQuery && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            setSearchResults([]);
+                                        }}
+                                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 cursor-pointer"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
+                        </div>
 
-                            {searchQuery ? (
-                                <div>
-                                    <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>
-                                        Search Results {isSearching && "(Searching...)"}
-                                    </h3>
-                                    {searchError ? (
-                                        <div className={cn("text-center p-4 text-red-500", darkMode ? "text-red-400" : "")}>
-                                            {searchError}
-                                        </div>
-                                    ) : searchResults.length === 0 && !isSearching ? (
-                                        <div className={cn("text-center p-4", darkMode ? "text-gray-400" : "text-gray-500")}>
-                                            No messages found
-                                        </div>
-                                    ) : (
-                                        searchResults.map((result, index) => (
-                                            <div
-                                                key={`${result.sessionId}-${result.messageId}-${index}`}
-                                                onClick={() => loadChat(result.sessionId)}
-                                                className={cn(
-                                                    "p-3 rounded-lg mb-2 cursor-pointer",
-                                                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                                                )}
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-medium truncate text-sm">{result.sessionTitle}</div>
-                                                    <div className="text-xs text-gray-500 truncate">
-                                                        {result.messageRole === 'user' ? 'You' : 'Bot'}: {result.messageContent.substring(0, 100)}...
-                                                    </div>
-                                                    <div className="text-xs text-gray-400">
-                                                        {new Date(result.timestamp).toLocaleString()}
-                                                    </div>
-                                                </div>
+                        <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                            <div className="p-2">
+                                {searchQuery ? (
+                                    <div>
+                                        <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>
+                                            Search Results {isSearching && "(Searching...)"}
+                                        </h3>
+                                        {searchError ? (
+                                            <div className={cn("text-center p-4 text-red-500", darkMode ? "text-red-400" : "")}>
+                                                {searchError}
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            ) : (
-                                <>
-                                    <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
-                                    {chatSessions.length === 0 ? (
-                                        <div
-                                            className={cn(
-                                                "text-center p-4",
-                                                darkMode ? "text-gray-400" : "text-gray-500"
-                                            )}
-                                        >
-                                            No chat history
-                                        </div>
-                                    ) : (
-                                        chatSessions.map((session) => (
-                                            <div
-                                                key={session.id}
-                                                onClick={() => loadChat(session.id)}
-                                                className={cn(
-                                                    "p-3 rounded-lg mb-2 cursor-pointer flex justify-between items-start group",
-                                                    darkMode
-                                                        ? currentSessionId === session.id
-                                                            ? "bg-gray-700"
-                                                            : "hover:bg-gray-700"
-                                                        : currentSessionId === session.id
-                                                            ? "bg-gray-300"
-                                                            : "hover:bg-gray-200"
-                                                )}
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-medium truncate">{session.title}</div>
-                                                    <div className="text-xs truncate">
-                                                        {new Date(session.timestamp).toLocaleString()}
-                                                    </div>
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={(e) => deleteSession(session.id, e)}
+                                        ) : searchResults.length === 0 && !isSearching ? (
+                                            <div className={cn("text-center p-4", darkMode ? "text-gray-400" : "text-gray-500")}>
+                                                No messages found
+                                            </div>
+                                        ) : (
+                                            searchResults.map((result, index) => (
+                                                <div
+                                                    key={`${result.sessionId}-${result.messageId}-${index}`}
+                                                    onClick={(e) => { e.preventDefault(); loadChat(result.sessionId); }}
                                                     className={cn(
-                                                        "opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
-                                                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
+                                                        "p-3 rounded-lg mb-2 cursor-pointer",
+                                                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
                                                     )}
                                                 >
-                                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                                </Button>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium truncate text-sm">{result.sessionTitle}</div>
+                                                        <div className="text-xs text-gray-500 truncate">
+                                                            {result.messageRole === 'user' ? 'You' : 'Bot'}: {result.messageContent.substring(0, 100)}...
+                                                        </div>
+                                                        <div className="text-xs text-gray-400">
+                                                            {new Date(result.timestamp).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
+                                        {chatSessions.length === 0 ? (
+                                            <div
+                                                className={cn(
+                                                    "text-center p-4",
+                                                    darkMode ? "text-gray-400" : "text-gray-500"
+                                                )}
+                                            >
+                                                No chat history
                                             </div>
-                                        ))
-                                    )}
-                                </>
-                            )}
+                                        ) : (
+                                            chatSessions.map((session) => (
+                                                <div
+                                                    key={session.id}
+                                                    onClick={(e) => { e.preventDefault(); loadChat(session.id); }}
+                                                    className={cn(
+                                                        "p-3 rounded-lg mb-2 cursor-pointer flex justify-between items-start group",
+                                                        darkMode
+                                                            ? currentSessionId === session.id
+                                                                ? "bg-gray-700"
+                                                                : "hover:bg-gray-700"
+                                                            : currentSessionId === session.id
+                                                                ? "bg-gray-300"
+                                                                : "hover:bg-gray-200"
+                                                    )}
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium truncate">{session.title}</div>
+                                                        <div className="text-xs truncate">
+                                                            {new Date(session.timestamp).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={(e) => deleteSession(session.id, e)}
+                                                        className={cn(
+                                                            "opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
+                                                            darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
+                                                        )}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
