@@ -24,3 +24,12 @@ export interface SpeechRecognitionState {
     isListening: boolean;
     isAvailable: boolean;
 }
+
+export interface SearchResult {
+    sessionId: string;
+    sessionTitle: string;
+    messageId: number;
+    messageContent: string;
+    messageRole: "user" | "bot";
+    timestamp: number;
+}

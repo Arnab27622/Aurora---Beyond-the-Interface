@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Menu, Settings } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Trash2, Menu, Settings, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ChatSession } from "@/lib/types";
+import { ChatSession, SearchResult } from "@/lib/types";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 
@@ -29,9 +30,35 @@ export const ChatHistory = ({
     userName,
 }: ChatHistoryProps) => {
     const [showSettings, setShowSettings] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     const handleLogout = () => {
         signOut({ callbackUrl: '/auth/signin' });
+    };
+
+    const handleSearch = async (query: string) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        setIsSearching(true);
+        setSearchError(null);
+
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error('Search failed');
+            const data = await response.json();
+            setSearchResults(data.results || []);
+        } catch (error) {
+            setSearchError('Failed to search messages');
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     return (
@@ -139,95 +166,170 @@ export const ChatHistory = ({
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-2">
-                            <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
-                            {chatSessions.length === 0 ? (
-                                <div
-                                    className={cn(
-                                        "text-center p-4",
-                                        darkMode ? "text-gray-400" : "text-gray-500"
-                                    )}
-                                >
-                                    No chat history
-                                </div>
-                            ) : (
-                                chatSessions.map((session) => (
-                                    <div
-                                        key={session.id}
-                                        onClick={() => loadChat(session.id)}
+                            <div className="mb-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Search chats"
+                                        value={searchQuery}
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value);
+                                            handleSearch(e.target.value);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSearch(searchQuery);
+                                            }
+                                        }}
                                         className={cn(
-                                            "p-3 rounded-lg mb-2 cursor-pointer flex justify-between items-start group",
-                                            darkMode
-                                                ? currentSessionId === session.id
-                                                    ? "bg-gray-700"
-                                                    : "hover:bg-gray-700"
-                                                : currentSessionId === session.id
-                                                    ? "bg-gray-300"
-                                                    : "hover:bg-gray-200"
+                                            "pl-10 pr-10",
+                                            darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
                                         )}
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium truncate">{session.title}</div>
-                                            <div className="text-xs truncate">
-                                                {new Date(session.timestamp).toLocaleString()}
-                                            </div>
-                                        </div>
+                                    />
+                                    {searchQuery && (
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={(e) => deleteSession(session.id, e)}
+                                            onClick={() => {
+                                                setSearchQuery("");
+                                                setSearchResults([]);
+                                            }}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 cursor-pointer"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {searchQuery ? (
+                                <div>
+                                    <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>
+                                        Search Results {isSearching && "(Searching...)"}
+                                    </h3>
+                                    {searchError ? (
+                                        <div className={cn("text-center p-4 text-red-500", darkMode ? "text-red-400" : "")}>
+                                            {searchError}
+                                        </div>
+                                    ) : searchResults.length === 0 && !isSearching ? (
+                                        <div className={cn("text-center p-4", darkMode ? "text-gray-400" : "text-gray-500")}>
+                                            No messages found
+                                        </div>
+                                    ) : (
+                                        searchResults.map((result, index) => (
+                                            <div
+                                                key={`${result.sessionId}-${result.messageId}-${index}`}
+                                                onClick={() => loadChat(result.sessionId)}
+                                                className={cn(
+                                                    "p-3 rounded-lg mb-2 cursor-pointer",
+                                                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
+                                                )}
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium truncate text-sm">{result.sessionTitle}</div>
+                                                    <div className="text-xs text-gray-500 truncate">
+                                                        {result.messageRole === 'user' ? 'You' : 'Bot'}: {result.messageContent.substring(0, 100)}...
+                                                    </div>
+                                                    <div className="text-xs text-gray-400">
+                                                        {new Date(result.timestamp).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
+                                    {chatSessions.length === 0 ? (
+                                        <div
                                             className={cn(
-                                                "opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
-                                                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
+                                                "text-center p-4",
+                                                darkMode ? "text-gray-400" : "text-gray-500"
                                             )}
                                         >
-                                            <Trash2 className="h-4 w-4 text-red-500" />
-                                        </Button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div >
-                )}
-            </div >
-
-            {/* Settings Popup */}
-            {
-                showSettings && (
-                    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div
-                            className={cn(
-                                "p-6 rounded-lg shadow-lg max-w-sm w-full mx-4",
-                                darkMode ? "bg-[#252526] text-white" : "bg-white text-black"
-                            )}
-                        >
-                            <h3 className="text-lg font-semibold mb-4">Settings</h3>
-                            <div className="mb-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400">User:</p>
-                                <p className="font-medium">{userName || 'User'}</p>
-                            </div>
-                            <div className="flex gap-3">
-                                <Button
-                                    onClick={() => setShowSettings(false)}
-                                    variant="outline"
-                                    className={cn(
-                                        "flex-1 cursor-pointer",
-                                        darkMode ? "border-[#434343] bg-[#434343] text-white hover:bg-white" : ""
+                                            No chat history
+                                        </div>
+                                    ) : (
+                                        chatSessions.map((session) => (
+                                            <div
+                                                key={session.id}
+                                                onClick={() => loadChat(session.id)}
+                                                className={cn(
+                                                    "p-3 rounded-lg mb-2 cursor-pointer flex justify-between items-start group",
+                                                    darkMode
+                                                        ? currentSessionId === session.id
+                                                            ? "bg-gray-700"
+                                                            : "hover:bg-gray-700"
+                                                        : currentSessionId === session.id
+                                                            ? "bg-gray-300"
+                                                            : "hover:bg-gray-200"
+                                                )}
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium truncate">{session.title}</div>
+                                                    <div className="text-xs truncate">
+                                                        {new Date(session.timestamp).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={(e) => deleteSession(session.id, e)}
+                                                    className={cn(
+                                                        "opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
+                                                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
+                                                    )}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </div>
+                                        ))
                                     )}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleLogout}
-                                    variant="destructive"
-                                    className="flex-1 cursor-pointer"
-                                >
-                                    Logout
-                                </Button>
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
-                )
-            }
+                )}
+            </div>
+
+            {/* Settings Popup */}
+            {showSettings && (
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div
+                        className={cn(
+                            "p-6 rounded-lg shadow-lg max-w-sm w-full mx-4",
+                            darkMode ? "bg-[#252526] text-white" : "bg-white text-black"
+                        )}
+                    >
+                        <h3 className="text-lg font-semibold mb-4">Settings</h3>
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">User:</p>
+                            <p className="font-medium">{userName || 'User'}</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => setShowSettings(false)}
+                                variant="outline"
+                                className={cn(
+                                    "flex-1 cursor-pointer",
+                                    darkMode ? "border-[#434343] bg-[#434343] text-white hover:bg-white" : ""
+                                )}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleLogout}
+                                variant="destructive"
+                                className="flex-1 cursor-pointer"
+                            >
+                                Logout
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
