@@ -412,41 +412,53 @@ export default function ChatbotPage() {
         setIsFileLoading(true);
 
         try {
-            if (file.type === "application/pdf") {
-                // Handle PDF
-                const text = await processPDF(file);
+            // Read file as base64 for all file types to enable original file download
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+
+            reader.onload = async () => {
+                const base64 = reader.result as string;
+                // Extract base64 data without the prefix
+                const base64Data = base64.split(",")[1];
+
+                let fileType: SupportedFileType | "pdf" = "txt"; // default
+
+                if (file.type === "application/pdf") {
+                    fileType = "pdf";
+                } else {
+                    const detectedType = getFileType(file);
+                    if (detectedType) {
+                        fileType = detectedType;
+                    }
+                }
+
                 setFileContext({
-                    type: "pdf",
-                    data: text || "[Failed to extract PDF content]",
+                    type: fileType,
+                    data: base64Data, // Store base64 data for download
                     filename: file.name
                 });
-            } else {
-                // Handle other file types
-                const fileType = getFileType(file);
-                if (fileType) {
-                    const text = await processFile(file, fileType);
-                    setFileContext({
-                        type: fileType,
-                        data: text || `[Failed to extract ${fileType.toUpperCase()} content]`,
-                        filename: file.name
-                    });
-                } else {
-                    setFileContext({
-                        type: "txt", // fallback
-                        data: `[Unsupported file type: ${file.name}]`,
-                        filename: file.name
-                    });
-                }
-            }
+
+                setIsFileLoading(false);
+            };
+
+            reader.onerror = (error) => {
+                logError(error, 'File read');
+                setFileContext({
+                    type: "txt", // fallback
+                    data: `[Failed to process file: ${file.name}]`,
+                    filename: file.name
+                });
+                setIsFileLoading(false);
+            };
         } catch (error) {
-            logError(error, 'File processing');
+            logError(error, 'File upload');
             setFileContext({
                 type: "txt", // fallback
                 data: `[Failed to process file: ${file.name}]`,
                 filename: file.name
             });
-        } finally {
             setIsFileLoading(false);
+        } finally {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }

@@ -52,7 +52,7 @@ const extractTextFromTxt = async (file: File): Promise<string> => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const text = e.target?.result as string;
-            resolve(text.substring(0, 10000)); // Limit to 10k characters
+            resolve(text.substring(0, 50000)); // Limit to 50k characters
         };
         reader.onerror = () => reject(new Error('Failed to read text file'));
         reader.readAsText(file);
@@ -84,7 +84,7 @@ const extractTextFromDocx = async (file: File): Promise<string> => {
         const mammoth = await import('mammoth');
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
-        return result.value.substring(0, 10000); // Limit to 10k characters
+        return result.value.substring(0, 50000); // Limit to 50k characters
     } catch (error) {
         throw new Error('Failed to extract text from DOCX file. Please ensure the file is not corrupted.');
     }
@@ -110,7 +110,7 @@ const extractTextFromXlsx = async (file: File): Promise<string> => {
             }
         });
 
-        return extractedText.substring(0, 10000); // Limit to 10k characters
+        return extractedText.substring(0, 50000); // Limit to 50k characters
     } catch (error) {
         throw new Error('Failed to extract text from Excel file. Please ensure the file is not corrupted.');
     }
@@ -138,7 +138,7 @@ const extractTextFromPptx = async (file: File): Promise<string> => {
             });
         }
 
-        return extractedText.substring(0, 10000); // Limit to 10k characters
+        return extractedText.substring(0, 50000); // Limit to 50k characters
     } catch (error) {
         // Fallback: return basic message if extraction fails
         return `PowerPoint file "${file.name}" uploaded. Text extraction not available for this file type.`;

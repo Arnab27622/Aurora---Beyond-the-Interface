@@ -126,7 +126,7 @@ export const usePDFProcessing = (shouldLoad: boolean = false) => {
 
         // Extract text
         const text = await extractTextFromPDF(file);
-        return text.substring(0, 5000); // Limit to 5000 characters
+        return text.substring(0, 50000); // Limit to 50k characters
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);

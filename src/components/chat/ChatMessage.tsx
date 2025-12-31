@@ -31,8 +31,74 @@ export const ChatMessage = ({
         return null;
     }
 
-    const handleFileClick = (file: FileContextType) => {
-        setPreviewFile(file);
+    const downloadFile = (file: FileContextType | null) => {
+        if (!file) return;
+        if (file.type === "image") {
+            // For images, create a downloadable link
+            const link = document.createElement("a");
+            link.href = `data:image/*;base64,${file.data}`;
+            link.download = file.filename;
+            link.click();
+        } else {
+            // For other files, decode base64 and create blob with appropriate MIME type
+            try {
+                const binaryString = atob(file.data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                // Determine MIME type based on file type
+                let mimeType = "application/octet-stream"; // default
+                switch (file.type) {
+                    case "pdf":
+                        mimeType = "application/pdf";
+                        break;
+                    case "txt":
+                        mimeType = "text/plain";
+                        break;
+                    case "docx":
+                        mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                        break;
+                    case "xlsx":
+                        mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        break;
+                    case "csv":
+                        mimeType = "text/csv";
+                        break;
+                    case "pptx":
+                        mimeType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                        break;
+                }
+
+                const blob = new Blob([bytes], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = file.filename;
+                link.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Failed to download file:", error);
+                // Fallback: create text file with error message
+                const blob = new Blob([`Failed to download ${file.filename}: ${error}`], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = file.filename;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+    };
+
+    const handleFileClick = (file: FileContextType | null) => {
+        if (!file) return;
+        if (file.type === "image") {
+            setPreviewFile(file);
+        } else {
+            downloadFile(file);
+        }
     };
 
     const closePreview = () => {
