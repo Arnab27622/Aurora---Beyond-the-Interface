@@ -18,6 +18,7 @@ import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import { ComponentErrorBoundary } from "@/components/errors/ComponentErrorBoundary";
 import { logError } from "@/lib/errorHandler";
 import { usePDFProcessing } from "@/lib/usePDFLoader";
+import { useFileLoader, SupportedFileType } from "@/lib/useFileLoader";
 import { useTheme } from "@/components/ThemeProvider";
 
 declare global {
@@ -69,6 +70,7 @@ export default function ChatbotPage() {
 
     // Lazy load PDF processing when needed
     const { processPDF } = usePDFProcessing(true);
+    const { processFile, isProcessing: isFileProcessing, error: fileError } = useFileLoader();
 
 
 
@@ -357,34 +359,67 @@ export default function ChatbotPage() {
         }
     };
 
-    // Handle PDF file upload
-    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Get file type from file extension
+    const getFileType = (file: File): SupportedFileType | null => {
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'txt':
+                return 'txt';
+            case 'docx':
+                return 'docx';
+            case 'xlsx':
+                return 'xlsx';
+            case 'csv':
+                return 'csv';
+            case 'pptx':
+                return 'pptx';
+            default:
+                if (file.type === 'application/pdf') {
+                    return null; // Handle PDF separately
+                }
+                return null;
+        }
+    };
+
+    // Handle file upload (documents)
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || file.type !== "application/pdf") return;
+        if (!file) return;
 
         setIsFileLoading(true);
 
         try {
-            // Lazy load PDF and extract text
-            const text = await processPDF(file);
-            if (text) {
+            if (file.type === "application/pdf") {
+                // Handle PDF
+                const text = await processPDF(file);
                 setFileContext({
                     type: "pdf",
-                    data: text,
+                    data: text || "[Failed to extract PDF content]",
                     filename: file.name
                 });
             } else {
-                setFileContext({
-                    type: "pdf",
-                    data: "[Failed to extract PDF content]",
-                    filename: file.name
-                });
+                // Handle other file types
+                const fileType = getFileType(file);
+                if (fileType) {
+                    const text = await processFile(file, fileType);
+                    setFileContext({
+                        type: fileType,
+                        data: text || `[Failed to extract ${fileType.toUpperCase()} content]`,
+                        filename: file.name
+                    });
+                } else {
+                    setFileContext({
+                        type: "txt", // fallback
+                        data: `[Unsupported file type: ${file.name}]`,
+                        filename: file.name
+                    });
+                }
             }
         } catch (error) {
-            logError(error, 'PDF extraction');
+            logError(error, 'File processing');
             setFileContext({
-                type: "pdf",
-                data: "[Failed to extract PDF content]",
+                type: "txt", // fallback
+                data: `[Failed to process file: ${file.name}]`,
                 filename: file.name
             });
         } finally {
@@ -561,7 +596,7 @@ export default function ChatbotPage() {
                                 sendMessage={sendMessage}
                                 loading={loading}
                                 darkMode={darkMode}
-                                handlePdfUpload={handlePdfUpload}
+                                handleFileUpload={handleFileUpload}
                                 handleImageUpload={handleImageUpload}
                                 isFileLoading={isFileLoading}
                                 fileContext={fileContext}

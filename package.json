@@ -20,14 +20,17 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.515.0",
+    "mammoth": "^1.11.0",
     "mongoose": "^9.0.2",
     "next": "15.3.8",
     "next-auth": "^4.24.13",
     "pdfjs-dist": "^5.3.31",
+    "pptx-parser": "^1.1.7-beta.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "xlsx": "^0.20.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

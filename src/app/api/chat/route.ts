@@ -14,7 +14,7 @@ const MAX_FILE_DATA_LENGTH = 5000000; // Increased from 50000 to support larger 
 const MAX_MESSAGES = 100;
 const MAX_MESSAGE_LENGTH = 10000;
 const REQUEST_TIMEOUT_MS = 30000;
-const VALID_FILE_TYPES = ["pdf", "image"];
+const VALID_FILE_TYPES = ["pdf", "image", "txt", "docx", "xlsx", "csv", "pptx"];
 const VALID_ROLES = ["user", "bot", "model"];
 
 interface ChatRequest {
@@ -24,7 +24,7 @@ interface ChatRequest {
     content: string;
   }>;
   fileContext: {
-    type: "pdf" | "image" | null;
+    type: "pdf" | "image" | "txt" | "docx" | "xlsx" | "csv" | "pptx" | null;
     data: string;
     filename: string;
   } | null;
@@ -369,6 +369,16 @@ export async function POST(request: NextRequest) {
         apiContent =
           input.trim() ||
           `Please analyze this image: ${fileContext.filename}`;
+      } else if (["txt", "docx", "xlsx", "csv", "pptx"].includes(fileContext.type)) {
+        const fileTypeLabels = {
+          txt: "Text File",
+          docx: "Word Document",
+          xlsx: "Excel Spreadsheet",
+          csv: "CSV File",
+          pptx: "PowerPoint Presentation"
+        };
+        const label = fileTypeLabels[fileContext.type as keyof typeof fileTypeLabels] || "Document";
+        apiContent = `[${label}: ${fileContext.filename}]\n${fileContext.data}\n\n[Question]: ${input.trim()}`;
       }
     } else {
       apiContent = input.trim();

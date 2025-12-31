@@ -15,7 +15,7 @@ export interface ChatSession {
 }
 
 export type FileContextType = {
-    type: "pdf" | "image";
+    type: "pdf" | "image" | "txt" | "docx" | "xlsx" | "csv" | "pptx";
     data: string;
     filename: string;
 } | null;

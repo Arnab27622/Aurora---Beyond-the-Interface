@@ -13,7 +13,7 @@ interface ChatInputProps {
     sendMessage: () => void;
     loading: boolean;
     darkMode: boolean;
-    handlePdfUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+    handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
     handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
     isFileLoading: boolean;
     fileContext: FileContextType;
@@ -33,7 +33,7 @@ export const ChatInput = ({
     sendMessage,
     loading,
     darkMode,
-    handlePdfUpload,
+    handleFileUpload,
     handleImageUpload,
     isFileLoading,
     fileContext,
@@ -79,11 +79,12 @@ export const ChatInput = ({
             <div className="flex items-center gap-2 max-w-3xl mx-auto w-full px-4">
                 <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.txt,.docx,.xlsx,.csv,.pptx"
                     ref={fileInputRef as React.RefObject<HTMLInputElement>}
-                    onChange={handlePdfUpload}
+                    onChange={handleFileUpload}
                     className="hidden"
                     disabled={isFileLoading || loading}
+                    aria-label="Upload document file"
                 />
                 <input
                     type="file"
@@ -92,6 +93,7 @@ export const ChatInput = ({
                     onChange={handleImageUpload}
                     className="hidden"
                     disabled={isFileLoading || loading}
+                    aria-label="Upload image file"
                 />
 
                 {/* Desktop buttons */}
@@ -108,6 +110,7 @@ export const ChatInput = ({
                                 ? "border-gray-500 bg-transparent hover:bg-white text-white"
                                 : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
                         )}
+                        aria-label="Upload PDF file"
                     >
                         <File className="h-4 w-4" />
                     </Button>
@@ -127,6 +130,7 @@ export const ChatInput = ({
                                     : "border-gray-300 bg-transparent hover:bg-gray-100 text-black",
                                 isListening ? (darkMode ? "bg-red-500" : "bg-red-400") : ""
                             )}
+                            aria-label={isListening ? "Stop voice input" : "Start voice input"}
                         >
                             {isListening ? (
                                 <Square className="h-4 w-4" />
@@ -170,6 +174,9 @@ export const ChatInput = ({
                                 ? "border-gray-500 bg-transparent hover:bg-white text-white"
                                 : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
                         )}
+                        aria-label="Open attachment options"
+                        aria-expanded={isDropdownOpen}
+                        aria-haspopup="menu"
                     >
                         <Plus className="h-4 w-4" />
                     </Button>
@@ -197,6 +204,7 @@ export const ChatInput = ({
                                         ? "border-gray-500 bg-transparent hover:bg-white text-white"
                                         : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
                                 )}
+                                aria-label="Upload document file"
                             >
                                 <File className="h-4 w-4" />
                             </Button>
@@ -219,6 +227,7 @@ export const ChatInput = ({
                                             : "border-gray-300 bg-transparent hover:bg-gray-100 text-black",
                                         isListening ? (darkMode ? "bg-red-500" : "bg-red-400") : ""
                                     )}
+                                    aria-label={isListening ? "Stop voice input" : "Start voice input"}
                                 >
                                     {isListening ? (
                                         <Square className="h-4 w-4" />
@@ -243,6 +252,7 @@ export const ChatInput = ({
                                         ? "border-gray-500 bg-transparent hover:bg-white text-white"
                                         : "border-gray-300 bg-transparent hover:bg-gray-100 text-black"
                                 )}
+                                aria-label={isFileLoading ? "Uploading image" : "Upload image file"}
                             >
                                 {isFileLoading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -288,6 +298,7 @@ export const ChatInput = ({
                         (loading || isFileLoading) && "opacity-50 cursor-not-allowed"
                     )}
                     disabled={loading || (!input.trim() && !fileContext) || isFileLoading}
+                    aria-label={loading ? "Sending message" : "Send message"}
                 >
                     {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

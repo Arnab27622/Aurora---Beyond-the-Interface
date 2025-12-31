@@ -4,7 +4,7 @@ import { Plus, Trash2, Menu, Settings, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession, SearchResult } from "@/lib/types";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface ChatHistoryProps {
     chatSessions: ChatSession[];
@@ -34,6 +34,31 @@ export const ChatHistory = ({
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
+    const [focusSearch, setFocusSearch] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    const setSearchInputRef = (element: HTMLInputElement | null) => {
+        searchInputRef.current = element;
+        if (element && showHistory && focusSearch) {
+            // Wait for the sidebar transition to complete before focusing
+            setTimeout(() => {
+                element.focus();
+                setFocusSearch(false);
+            }, 350); // Slightly longer than the 300ms transition
+        }
+    };
+
+    useEffect(() => {
+        if (showHistory && focusSearch && searchInputRef.current) {
+            // Wait for the sidebar transition to complete before focusing
+            const timer = setTimeout(() => {
+                searchInputRef.current?.focus();
+                setFocusSearch(false);
+            }, 350); // Slightly longer than the 300ms transition
+
+            return () => clearTimeout(timer);
+        }
+    }, [showHistory, focusSearch]);
 
     const handleLogout = () => {
         signOut({ callbackUrl: '/auth/signin' });
@@ -93,6 +118,19 @@ export const ChatHistory = ({
                                 darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200")}
                         >
                             <Plus className="h-5 w-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                setShowHistory(true);
+                                setFocusSearch(true);
+                            }}
+                            className={cn(
+                                "mb-4 cursor-pointer",
+                                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200")}
+                        >
+                            <Search className="h-5 w-5" />
                         </Button>
                         <Button
                             variant="ghost"
@@ -170,6 +208,7 @@ export const ChatHistory = ({
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
+                                        ref={setSearchInputRef}
                                         type="text"
                                         placeholder="Search chats"
                                         value={searchQuery}
