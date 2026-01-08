@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+const FileContextSchema = new mongoose.Schema({
+    type: {
+        type: String,
+        enum: ['pdf', 'image', 'txt', 'docx', 'xlsx', 'csv', 'pptx'],
+        required: true,
+    },
+    data: {
+        type: String,
+        required: true,
+    },
+    filename: {
+        type: String,
+        required: true,
+    },
+}, { _id: false });
+
 const MessageSchema = new mongoose.Schema({
     id: {
         type: Number,
@@ -14,6 +30,7 @@ const MessageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    file: FileContextSchema,
     isCached: {
         type: Boolean,
         default: false,
