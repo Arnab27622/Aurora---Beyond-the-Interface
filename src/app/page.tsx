@@ -392,48 +392,56 @@ export default function ChatbotPage() {
         setIsFileLoading(true);
 
         try {
-            // Read file as base64 for all file types to enable original file download
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
+            let fileType: SupportedFileType | "pdf" = "txt"; // default
+            let fileData: string = "";
 
-            reader.onload = async () => {
-                const base64 = reader.result as string;
-                // Extract base64 data without the prefix
-                const base64Data = base64.split(",")[1];
-
-                let fileType: SupportedFileType | "pdf" = "txt"; // default
-
-                if (file.type === "application/pdf") {
-                    fileType = "pdf";
+            if (file.type === "application/pdf") {
+                fileType = "pdf";
+                // Extract text content from PDF using the PDF processing hook
+                const extractedText = await processPDF(file);
+                if (extractedText) {
+                    fileData = extractedText;
                 } else {
-                    const detectedType = getFileType(file);
-                    if (detectedType) {
-                        fileType = detectedType;
-                    }
+                    fileData = `[Failed to extract text from PDF file: ${file.name}]`;
                 }
+            } else {
+                const detectedType = getFileType(file);
+                if (detectedType) {
+                    fileType = detectedType;
+                    // Extract text content for supported file types
+                    const extractedText = await processFile(file, detectedType);
+                    if (extractedText) {
+                        fileData = extractedText;
+                    } else {
+                        fileData = `[Failed to extract text from ${fileType.toUpperCase()} file: ${file.name}]`;
+                    }
+                } else {
+                    // Fallback for unsupported text files
+                    const reader = new FileReader();
+                    reader.readAsText(file);
 
-                setFileContext({
-                    type: fileType,
-                    data: base64Data, // Store base64 data for download
-                    filename: file.name
-                });
+                    await new Promise<void>((resolve, reject) => {
+                        reader.onload = () => {
+                            fileData = reader.result as string;
+                            resolve();
+                        };
+                        reader.onerror = () => reject(new Error('Failed to read file'));
+                    });
+                }
+            }
 
-                setIsFileLoading(false);
-            };
+            setFileContext({
+                type: fileType,
+                data: fileData,
+                filename: file.name
+            });
 
-            reader.onerror = (error) => {
-                logError(error, 'File read');
-                setFileContext({
-                    type: "txt", // fallback
-                    data: `[Failed to process file: ${file.name}]`,
-                    filename: file.name
-                });
-                setIsFileLoading(false);
-            };
+            setIsFileLoading(false);
         } catch (error) {
             logError(error, 'File upload');
+            const detectedType = getFileType(file) || "txt";
             setFileContext({
-                type: "txt", // fallback
+                type: detectedType,
                 data: `[Failed to process file: ${file.name}]`,
                 filename: file.name
             });
