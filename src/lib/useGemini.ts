@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
-import { responseCache } from "@/lib/cache";
 import { streamChatResponse, StreamEvent } from "@/lib/streaming";
 
 interface UseGeminiReturn {
@@ -10,17 +9,15 @@ interface UseGeminiReturn {
     messages: Message[],
     fileContext: FileContextType,
     messageId: number
-  ) => Promise<{ response: Message; nextMessageId: number; isCached?: boolean }>;
+  ) => Promise<{ response: Message; nextMessageId: number }>;
   streamMessage: (
     input: string,
     messages: Message[],
     fileContext: FileContextType,
     messageId: number,
-    onChunk: (text: string) => void,
-    skipCache?: boolean
-  ) => Promise<{ response: string; isCached?: boolean }>;
+    onChunk: (text: string) => void
+  ) => Promise<{ response: string }>;
   isConfigured: boolean;
-  clearCache?: () => void;
 }
 
 export function useGemini(): UseGeminiReturn {
@@ -39,22 +36,6 @@ export function useGemini(): UseGeminiReturn {
         content: sanitizeInput(m.content),
       }));
 
-      const cachedResponse = responseCache.get(sanitizedInput, fileContext);
-      if (cachedResponse) {
-        const botMessage: Message = {
-          id: messageId + 1,
-          role: "bot",
-          content: cachedResponse,
-          isCached: true,
-        };
-
-        return {
-          response: botMessage,
-          nextMessageId: messageId + 2,
-          isCached: true,
-        };
-      }
-
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,7 +43,6 @@ export function useGemini(): UseGeminiReturn {
           input: sanitizedInput,
           messages: sanitizedMessages,
           fileContext,
-          skipCache: false,
         }),
       });
 
@@ -77,8 +57,6 @@ export function useGemini(): UseGeminiReturn {
       const data = await response.json();
       const botText =
         data.content || "Sorry, I couldn't process that request.";
-
-      responseCache.set(sanitizedInput, botText, fileContext);
 
       const botMessage: Message = {
         id: messageId + 1,
@@ -100,8 +78,7 @@ export function useGemini(): UseGeminiReturn {
       messages: Message[],
       fileContext: FileContextType,
       messageId: number,
-      onChunk: (text: string) => void,
-      skipCache: boolean = false
+      onChunk: (text: string) => void
     ) => {
       const sanitizedInput = sanitizeInput(input);
       const sanitizedMessages = messages.map((m) => ({
@@ -109,27 +86,16 @@ export function useGemini(): UseGeminiReturn {
         content: sanitizeInput(m.content),
       }));
 
-      const cachedResponse = responseCache.get(sanitizedInput, fileContext);
-      if (cachedResponse && !skipCache) {
-        onChunk(cachedResponse);
-        return {
-          response: cachedResponse,
-          isCached: true,
-        };
-      }
-
       let fullResponse = "";
       for await (const event of streamChatResponse(
         sanitizedInput,
         sanitizedMessages,
-        fileContext,
-        skipCache
+        fileContext
       )) {
         if (event.error) {
           throw new Error(event.error);
         }
         if (event.done) {
-          responseCache.set(sanitizedInput, fullResponse, fileContext);
           break;
         }
         if (event.text) {
@@ -149,6 +115,5 @@ export function useGemini(): UseGeminiReturn {
     sendMessage,
     streamMessage,
     isConfigured,
-    clearCache: () => responseCache.clear(),
   };
 }

@@ -13,8 +13,7 @@ export interface StreamEvent {
 export async function* streamChatResponse(
   input: string,
   messages: Array<{ role: string; content: string }>,
-  fileContext: any,
-  skipCache: boolean = false
+  fileContext: any
 ): AsyncGenerator<StreamEvent, void, unknown> {
   try {
     const response = await fetch("/api/chat?stream=true", {
@@ -26,7 +25,6 @@ export async function* streamChatResponse(
         input,
         messages,
         fileContext,
-        skipCache,
       }),
     });
 

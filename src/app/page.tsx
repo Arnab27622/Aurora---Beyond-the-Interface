@@ -200,9 +200,8 @@ export default function ChatbotPage() {
         try {
             let fullContent = "";
             let botMessageAdded = false;
-            let isCachedResponse = false;
 
-            const { response, isCached } = await sendGeminiStreamMessage(
+            await sendGeminiStreamMessage(
                 displayContent,
                 [...messages, userMessage],
                 fileContext,
@@ -223,7 +222,7 @@ export default function ChatbotPage() {
                         setMessages((prev) =>
                             prev.map((msg) =>
                                 msg.id === botMessageId
-                                    ? { ...msg, content: fullContent, isCached: isCachedResponse }
+                                    ? { ...msg, content: fullContent }
                                     : msg
                             )
                         );
@@ -231,26 +230,14 @@ export default function ChatbotPage() {
                 }
             );
 
-            // Set cached flag after streaming completes
-            isCachedResponse = isCached || false;
-            if (isCachedResponse) {
-                setMessages((prev) =>
-                    prev.map((msg) =>
-                        msg.id === botMessageId
-                            ? { ...msg, isCached: true, responses: [fullContent], currentResponseIndex: 0 }
-                            : msg
-                    )
-                );
-            } else {
-                // Initialize responses array for new messages
-                setMessages((prev) =>
-                    prev.map((msg) =>
-                        msg.id === botMessageId
-                            ? { ...msg, responses: [fullContent], currentResponseIndex: 0 }
-                            : msg
-                    )
-                );
-            }
+            // Initialize responses array for new messages
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === botMessageId
+                        ? { ...msg, responses: [fullContent], currentResponseIndex: 0 }
+                        : msg
+                )
+            );
         } catch (err: any) {
             logError(err, 'Message sending');
             const errorMessage: Message = {
@@ -288,33 +275,28 @@ export default function ChatbotPage() {
             // Clear the existing bot message content
             setMessages(prev => prev.map(msg =>
                 msg.id === botMessageId
-                    ? { ...msg, content: "", isCached: false }
+                    ? { ...msg, content: "" }
                     : msg
             ));
 
             let fullContent = "";
-            let isCachedResponse = false;
 
-            const { response, isCached } = await sendGeminiStreamMessage(
+            const { response } = await sendGeminiStreamMessage(
                 userMessage.content,
                 [...previousMessages, userMessage],
-                null, // fileContext is not preserved for regeneration
+                userMessage.file || null, // Preserve file context from original user message
                 userMessage.id,
                 (chunk) => {
                     fullContent += chunk;
                     setMessages((prev) =>
                         prev.map((msg) =>
                             msg.id === botMessageId
-                                ? { ...msg, content: fullContent, isCached: isCachedResponse }
+                                ? { ...msg, content: fullContent }
                                 : msg
                         )
                     );
-                },
-                true // skipCache: true for regeneration
+                }
             );
-
-            // Set cached flag after streaming completes
-            isCachedResponse = isCached || false;
 
             // Store the new response in the responses array
             setMessages((prev) =>
@@ -328,8 +310,7 @@ export default function ChatbotPage() {
                             ...msg,
                             content: fullContent,
                             responses: newResponses,
-                            currentResponseIndex: newIndex,
-                            isCached: isCachedResponse
+                            currentResponseIndex: newIndex
                         };
                     }
                     return msg;
@@ -367,8 +348,7 @@ export default function ChatbotPage() {
                 return {
                     ...msg,
                     content: msg.responses[newIndex],
-                    currentResponseIndex: newIndex,
-                    isCached: false // Reset cached flag when navigating
+                    currentResponseIndex: newIndex
                 };
             }
             return msg;
