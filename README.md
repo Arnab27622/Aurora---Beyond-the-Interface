@@ -40,8 +40,13 @@ npm install
 
 ```bash
 # Create .env.local in root directory
-GEMINI_API_KEY=your_api_key_here
-GEMINI_MODEL_ID=your_model_id_here
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+
+MONGODB_URI=your-mongodb-connection-string
+
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL_ID=your-gemini-model-id
 ```
 
 **Note:** These variables are private (no `NEXT_PUBLIC_` prefix) and are only accessible on the server-side. Your API keys are never exposed to the client.
