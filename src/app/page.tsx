@@ -8,6 +8,7 @@ import { ChatHistory } from "@/components/chat/ChatHistory";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { FileContextIndicator } from "@/components/chat/FileContextIndicator";
+import { ChevronDown } from "lucide-react";
 
 import { markdownComponents } from "@/components/chat/markdown-components";
 import { Message, FileContextType } from "@/lib/types";
@@ -38,8 +39,11 @@ export default function ChatbotPage() {
     const [showHistory, setShowHistory] = useState(false);
     const [regeneratingMessageId, setRegeneratingMessageId] = useState<number | null>(null);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
+    const [isAtBottom, setIsAtBottom] = useState(true);
+    const [hasScrollbar, setHasScrollbar] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,6 +101,39 @@ export default function ChatbotPage() {
         }
     }, [session, status, router]);
 
+    // Detect scroll position to show/hide down arrow button
+    useEffect(() => {
+        if (!isMounted) return;
+
+        const setupScrollListener = () => {
+            const scrollContainer = scrollContainerRef.current;
+            if (!scrollContainer) {
+                setTimeout(setupScrollListener, 100);
+                return;
+            }
+
+            const updateScrollState = () => {
+                const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+                const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px tolerance
+                // Only consider it having a scrollbar if there's significant overflow (more than 50px)
+                const hasScrollbar = scrollHeight > clientHeight + 50 && messages.length > 0;
+                setIsAtBottom(isAtBottom);
+                setHasScrollbar(hasScrollbar);
+            };
+
+            scrollContainer.addEventListener('scroll', updateScrollState);
+            // Delay to ensure DOM has updated after messages change
+            setTimeout(updateScrollState, 0);
+
+            return () => {
+                scrollContainer.removeEventListener('scroll', updateScrollState);
+            };
+        };
+
+        const cleanup = setupScrollListener();
+        return cleanup;
+    }, [isMounted, messages.length]);
+
     // Wrap hook functions to also clear UI state
     const handleNewChat = async () => {
         setIsLoadingChat(true);
@@ -105,6 +142,9 @@ export default function ChatbotPage() {
         setInput("");
         setIsTyping(false);
         setFileContext(null);
+        // Reset scroll state for new chat
+        setIsAtBottom(true);
+        setHasScrollbar(false);
         setIsLoadingChat(false);
     };
 
@@ -134,6 +174,9 @@ export default function ChatbotPage() {
         setInput("");
         setIsTyping(false);
         setFileContext(null);
+        // Reset scroll state for cleared chat
+        setIsAtBottom(true);
+        setHasScrollbar(false);
     };
 
     const sendMessage = async () => {
@@ -362,6 +405,15 @@ export default function ChatbotPage() {
         }
     };
 
+    const scrollToBottom = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({
+                top: scrollContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     // Get file type from file extension
     const getFileType = (file: File): SupportedFileType | null => {
         const extension = file.name.split('.').pop()?.toLowerCase();
@@ -543,8 +595,8 @@ export default function ChatbotPage() {
                         />
                     </ComponentErrorBoundary>
 
-                    <div className="flex-1 flex flex-col">
-                        <div className="flex-grow overflow-y-auto py-6 relative">
+                    <div className="flex-1 flex flex-col relative">
+                        <div className="flex-grow overflow-y-auto py-6 relative" ref={scrollContainerRef}>
                             <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto px-4">
                                 {messages.length === 0 && !loading && (
                                     <div className="absolute inset-0 flex items-center justify-center">
@@ -576,6 +628,23 @@ export default function ChatbotPage() {
                                 <div ref={messagesEndRef} />
                             </div>
                         </div>
+
+                        {/* Scroll to bottom button */}
+                        {(() => {
+                            const shouldShow = messages.length > 0 && hasScrollbar && !isAtBottom;
+                            return shouldShow && (
+                                <button
+                                    onClick={scrollToBottom}
+                                    className={cn(
+                                        "absolute bottom-20 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110",
+                                        darkMode ? "bg-gray-700 text-white hover:bg-gray-600" : "bg-white text-gray-700 hover:bg-gray-50"
+                                    )}
+                                    aria-label="Scroll to bottom"
+                                >
+                                    <ChevronDown className="w-5 h-5" />
+                                </button>
+                            );
+                        })()}
 
                         {/* Typing Indicator */}
                         {isTyping && (
