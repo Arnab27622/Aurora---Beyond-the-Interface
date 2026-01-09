@@ -636,7 +636,7 @@ export default function ChatbotPage() {
                                 <button
                                     onClick={scrollToBottom}
                                     className={cn(
-                                        "absolute bottom-20 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110",
+                                        "absolute bottom-20 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-200 cursor-pointer hover:scale-110",
                                         darkMode ? "bg-gray-700 text-white hover:bg-gray-600" : "bg-white text-gray-700 hover:bg-gray-50"
                                     )}
                                     aria-label="Scroll to bottom"

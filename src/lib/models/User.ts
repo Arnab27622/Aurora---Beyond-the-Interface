@@ -12,7 +12,14 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: function () {
+            return this.provider === 'credentials';
+        },
+    },
+    provider: {
+        type: String,
+        enum: ['credentials', 'google'],
+        default: 'credentials',
     },
     createdAt: {
         type: Date,

@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions, type DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import bcrypt from 'bcryptjs';
@@ -64,6 +65,16 @@ export const authOptions: NextAuthOptions = {
                 }
             },
         }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: false,
+            authorization: {
+                params: {
+                    prompt: 'consent',
+                }
+            }
+        }),
     ],
     session: {
         strategy: 'jwt',
@@ -76,6 +87,27 @@ export const authOptions: NextAuthOptions = {
         signIn: '/auth/signin',
     },
     callbacks: {
+        async signIn({ user, account, profile }) {
+            if (account?.provider === 'google') {
+                try {
+                    await dbConnect();
+
+                    const existingUser = await User.findOne({ email: user.email });
+
+                    if (!existingUser) {
+                        await User.create({
+                            name: user.name,
+                            email: user.email,
+                            provider: 'google',
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error creating Google user:', error);
+                    return false;
+                }
+            }
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;

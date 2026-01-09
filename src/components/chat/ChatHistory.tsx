@@ -62,7 +62,10 @@ export const ChatHistory = ({
     }, [showHistory, focusSearch]);
 
     const handleLogout = () => {
-        signOut({ callbackUrl: '/auth/signin' });
+        signOut({
+            callbackUrl: '/auth/signin',
+            redirect: true,
+        });
     };
 
     const handleSearch = async (query: string) => {
