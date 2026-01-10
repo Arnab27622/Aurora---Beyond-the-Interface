@@ -144,7 +144,7 @@ export const ChatMessage = ({
                     </div>
                 )}
 
-                <CopyButton text={message.content} darkMode={darkMode} />
+                <CopyButton text={message.content} darkMode={darkMode} position={message.role === "bot" ? "bottom" : "top"} />
                 <ReactMarkdown components={markdownComponents}>
                     {message.content}
                 </ReactMarkdown>

@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface CopyButtonProps {
     text: string;
     darkMode: boolean;
+    position?: 'top' | 'bottom';
 }
 
-export const CopyButton = ({ text, darkMode }: CopyButtonProps) => {
+export const CopyButton = ({ text, darkMode, position }: CopyButtonProps) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -24,7 +25,8 @@ export const CopyButton = ({ text, darkMode }: CopyButtonProps) => {
         <button
             onClick={handleCopy}
             className={cn(
-                "absolute top-1.5 sm:top-2 right-2 p-1.5 rounded-md transition-all cursor-pointer",
+                "absolute right-2 p-1.5 rounded-md transition-all cursor-pointer",
+                position === 'top' ? "top-1.5 sm:top-2" : "bottom-2 sm:bottom-3 sm:right-3.5",
                 darkMode
                     ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300",
