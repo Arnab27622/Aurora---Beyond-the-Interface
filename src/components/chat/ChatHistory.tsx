@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2, Menu, Settings, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession, SearchResult } from "@/lib/types";
