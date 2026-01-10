@@ -110,8 +110,8 @@ export const ChatMessage = ({
             <div
                 key={message.id}
                 className={cn(
-                    "whitespace-pre-wrap py-3 pl-4 pr-12 mb-4 rounded-md w-fit break-words max-w-[90%]",
-                    "text-base relative",
+                    "whitespace-pre-wrap py-2.5 pl-2 pr-12 sm:py-3 sm:pl-4 mb-2.5 sm:mb-4 rounded-md w-fit break-words max-w-[90%]",
+                    "text-sm sm:text-base relative",
                     message.role === "user"
                         ? darkMode
                             ? "bg-[#343541] text-white self-end ml-auto"

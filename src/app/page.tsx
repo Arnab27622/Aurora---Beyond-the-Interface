@@ -596,8 +596,8 @@ export default function ChatbotPage() {
                     </ComponentErrorBoundary>
 
                     <div className="flex-1 flex flex-col relative">
-                        <div className="flex-grow overflow-y-auto py-6 relative" ref={scrollContainerRef}>
-                            <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto px-4">
+                        <div className="flex-grow overflow-y-auto py-4 sm:py-6 relative" ref={scrollContainerRef}>
+                            <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto px-1 sm:px-4">
                                 {messages.length === 0 && !loading && (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <h2 className="text-2xl md:text-3xl lg:text-4xl font-normal text-center">What can I help with?</h2>
@@ -636,7 +636,7 @@ export default function ChatbotPage() {
                                 <button
                                     onClick={scrollToBottom}
                                     className={cn(
-                                        "absolute bottom-20 right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-200 cursor-pointer hover:scale-110",
+                                        "absolute bottom-20 right-2.5 sm:right-6 z-50 p-3 rounded-full shadow-lg transition-all duration-200 cursor-pointer hover:scale-110",
                                         darkMode ? "bg-gray-700 text-white hover:bg-gray-600" : "bg-white text-gray-700 hover:bg-gray-50"
                                     )}
                                     aria-label="Scroll to bottom"

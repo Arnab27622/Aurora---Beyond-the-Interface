@@ -24,7 +24,7 @@ export const CopyButton = ({ text, darkMode }: CopyButtonProps) => {
         <button
             onClick={handleCopy}
             className={cn(
-                "absolute top-2 right-2 p-1.5 rounded-md transition-all cursor-pointer",
+                "absolute top-1.5 sm:top-2 right-2 p-1.5 rounded-md transition-all cursor-pointer",
                 darkMode
                     ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300",
