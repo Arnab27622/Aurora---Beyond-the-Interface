@@ -26,9 +26,16 @@ export const ChatMessage = ({
 }: ChatMessageProps) => {
     const [previewFile, setPreviewFile] = useState<FileContextType | null>(null);
 
-    // Don't render the message if it's being regenerated (to avoid showing empty block)
+    // Show thinking bubble if regenerating
     if (isRegenerating) {
-        return null;
+        return (
+            <div className={cn(
+                "py-2 px-4 rounded-md text-base w-fit animate-pulse",
+                darkMode ? "bg-gray-600 text-white" : "bg-gray-300 text-black"
+            )}>
+                Thinking...
+            </div>
+        );
     }
 
     const downloadFile = (file: FileContextType | null) => {

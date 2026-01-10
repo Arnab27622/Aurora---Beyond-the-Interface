@@ -617,14 +617,7 @@ export default function ChatbotPage() {
                                     </ComponentErrorBoundary>
                                 ))}
 
-                                {(loading || regeneratingMessageId !== null) && (
-                                    <div className={cn(
-                                        "py-2 px-4 rounded-md text-base w-fit animate-pulse",
-                                        darkMode ? "bg-gray-600 text-white" : "bg-gray-300 text-black"
-                                    )}>
-                                        Thinking...
-                                    </div>
-                                )}
+
                                 <div ref={messagesEndRef} />
                             </div>
                         </div>
