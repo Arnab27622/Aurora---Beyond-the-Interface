@@ -32,7 +32,10 @@ const downloadImageFile = (file: Exclude<FileContextType, null>): void => {
 
 const downloadBinaryFile = (file: Exclude<FileContextType, null>): void => {
     try {
-        const binaryString = atob(file.data);
+        if (!file.binaryData) {
+            throw new Error("No binary data available for download");
+        }
+        const binaryString = atob(file.binaryData);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);

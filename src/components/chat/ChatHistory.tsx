@@ -147,7 +147,7 @@ export const ChatHistory = ({
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col h-full">
                         <div
                             className={cn(
                                 "p-4 border-b hidden md:block",
@@ -284,7 +284,7 @@ export const ChatHistory = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <h3 className={cn("text-sm font-semibold mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
+                                        <h3 className={cn("text-sm font-semibold", darkMode ? "text-gray-300" : "text-gray-700")}>Your Chats</h3>
                                         {chatSessions.length === 0 ? (
                                             <div
                                                 className={cn(

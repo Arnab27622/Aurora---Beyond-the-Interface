@@ -17,7 +17,8 @@ export interface ChatSession {
 
 export type FileContextType = {
     type: "pdf" | "image" | "txt" | "docx" | "xlsx" | "csv" | "pptx";
-    data: string;
+    data: string; // extracted text for API
+    binaryData?: string; // base64 encoded binary data for download
     filename: string;
 } | null;
 

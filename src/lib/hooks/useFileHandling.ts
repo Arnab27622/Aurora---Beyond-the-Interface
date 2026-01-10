@@ -43,6 +43,19 @@ export const useFileHandling = (
     try {
       let fileType: SupportedFileType | "pdf" = "txt";
       let fileData: string = "";
+      let binaryData: string = "";
+
+      // Read file as base64 for binaryData
+      const base64Reader = new FileReader();
+      base64Reader.readAsDataURL(file);
+      await new Promise<void>((resolve, reject) => {
+        base64Reader.onload = () => {
+          const base64 = base64Reader.result as string;
+          binaryData = base64.split(",")[1];
+          resolve();
+        };
+        base64Reader.onerror = () => reject(new Error('Failed to read file as base64'));
+      });
 
       if (file.type === "application/pdf") {
         fileType = "pdf";
@@ -79,6 +92,7 @@ export const useFileHandling = (
       setFileContext({
         type: fileType,
         data: fileData,
+        binaryData,
         filename: file.name
       });
 
@@ -115,6 +129,7 @@ export const useFileHandling = (
         setFileContext({
           type: "image",
           data: base64Data,
+          binaryData: base64Data,
           filename: file.name
         });
         setIsFileLoading(false);

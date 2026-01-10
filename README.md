@@ -1,4 +1,4 @@
-# 🌌 Aurora — Beyond the Interface Chatbot
+# 🌌 Aurora — Beyond the Interface Chat Assistant
 
 [Aurora Chatbot Preview](https://aurora-beyond-the-interface.vercel.app/)
 
