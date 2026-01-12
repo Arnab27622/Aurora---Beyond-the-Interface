@@ -5,6 +5,7 @@ import { createErrorResponse } from "./error-handler";
 import { prepareContentWithFile, buildGeminiContents } from "./content-builder";
 import { callGeminiAPI, extractBotResponse } from "./gemini-client";
 import { streamFromGemini, createStreamResponse } from "./streaming";
+import { validateCSRFToken } from "@/lib/csrf";
 import type { ChatRequest } from "./types";
 
 export async function POST(request: NextRequest) {
@@ -14,6 +15,27 @@ export async function POST(request: NextRequest) {
       "Method not allowed",
       "METHOD_NOT_ALLOWED",
       405
+    );
+    return NextResponse.json(error, { status });
+  }
+
+  // Validate CSRF token
+  const csrfToken = request.headers.get("x-csrf-token");
+  if (!csrfToken) {
+    const [error, status] = createErrorResponse(
+      "CSRF token missing",
+      "CSRF_MISSING",
+      403
+    );
+    return NextResponse.json(error, { status });
+  }
+
+  const isValidCSRF = validateCSRFToken(csrfToken);
+  if (!isValidCSRF) {
+    const [error, status] = createErrorResponse(
+      "Invalid CSRF token",
+      "CSRF_INVALID",
+      403
     );
     return NextResponse.json(error, { status });
   }

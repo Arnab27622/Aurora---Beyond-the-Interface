@@ -151,6 +151,7 @@ export default function ChatbotPage() {
                 setCurrentSessionId,
                 refreshSessions
             );
+            scrollToBottom();
         }
     };
 
@@ -167,6 +168,7 @@ export default function ChatbotPage() {
             setCurrentSessionId,
             refreshSessions
         );
+        scrollToBottom();
     };
 
     const handleRegenerate = (messageId: number) => {
@@ -225,27 +227,39 @@ export default function ChatbotPage() {
 
                     <div className="flex-1 flex flex-col relative">
                         <div className="flex-grow overflow-y-auto py-4 sm:py-6 relative" ref={scrollContainerRef}>
-                            <MessageList
-                                messages={messages}
-                                loading={chatState.loading}
-                                darkMode={darkMode}
-                                markdownComponents={markdownComponents(darkMode)}
-                                onRegenerate={handleRegenerate}
-                                regeneratingMessageId={chatState.regeneratingMessageId}
-                                onNavigateResponse={navigateResponse}
-                                messagesEndRef={messagesEndRef}
-                            />
+                            <ComponentErrorBoundary componentName="MessageList">
+                                <MessageList
+                                    messages={messages}
+                                    loading={chatState.loading}
+                                    darkMode={darkMode}
+                                    markdownComponents={markdownComponents(darkMode)}
+                                    onRegenerate={handleRegenerate}
+                                    regeneratingMessageId={chatState.regeneratingMessageId}
+                                    onNavigateResponse={navigateResponse}
+                                    messagesEndRef={messagesEndRef}
+                                />
+                            </ComponentErrorBoundary>
                         </div>
 
-                        <ScrollToBottomButton
-                            onClick={scrollToBottom}
-                            darkMode={darkMode}
-                            show={messages.length > 0 && scrollHasScrollbar && !scrollIsAtBottom}
-                        />
+                        <ComponentErrorBoundary componentName="ScrollToBottomButton">
+                            <ScrollToBottomButton
+                                onClick={scrollToBottom}
+                                darkMode={darkMode}
+                                show={messages.length > 0 && scrollHasScrollbar && !scrollIsAtBottom}
+                            />
+                        </ComponentErrorBoundary>
 
-                        {chatState.isTyping && <TypingIndicator darkMode={darkMode} />}
+                        {chatState.isTyping && (
+                            <ComponentErrorBoundary componentName="TypingIndicator">
+                                <TypingIndicator darkMode={darkMode} />
+                            </ComponentErrorBoundary>
+                        )}
 
-                        {isListening && <ListeningIndicator darkMode={darkMode} />}
+                        {isListening && (
+                            <ComponentErrorBoundary componentName="ListeningIndicator">
+                                <ListeningIndicator darkMode={darkMode} />
+                            </ComponentErrorBoundary>
+                        )}
 
                         <ComponentErrorBoundary componentName="FileContextIndicator">
                             <FileContextIndicator

@@ -108,6 +108,7 @@ export function escapeHtml(text: string): string {
 
 /**
  * Check if input contains suspicious patterns
+ * Enhanced with more comprehensive security checks
  */
 export function detectSuspiciousPatterns(input: string): {
   isSuspicious: boolean;
@@ -118,14 +119,45 @@ export function detectSuspiciousPatterns(input: string): {
   }
 
   const suspiciousPatterns = [
+    // XSS patterns
     /<script/i,
     /<iframe/i,
     /javascript:/i,
     /vbscript:/i,
+    /data:text\/html/i,
+    /data:text\/javascript/i,
+    /expression\s*\(/i,
+    /vbscript\s*:/i,
+
+    // Event handlers
+    /on\w+\s*=/i,
     /onerror\s*=/i,
     /onload\s*=/i,
     /onclick\s*=/i,
-    /data:text\/html/i,
+    /onmouseover\s*=/i,
+    /onsubmit\s*=/i,
+
+    // SQL injection patterns
+    /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b.*\b(select|from|where|and|or)\b)/i,
+    /(-{2,}|\/\*|\*\/)/,
+    /('|(\\x27)|(\\x2D))/,
+
+    // Path traversal
+    /\.\.[\/\\]/,
+    /%2e%2e[\/\\]/i,
+
+    // Command injection
+    /[;&|`$()]/,
+
+    // Other dangerous patterns
+    /<object/i,
+    /<embed/i,
+    /<applet/i,
+    /<meta/i,
+    /<link/i,
+    /<base/i,
+    /file:\/\//i,
+    /ftp:\/\//i,
   ];
 
   for (const pattern of suspiciousPatterns) {

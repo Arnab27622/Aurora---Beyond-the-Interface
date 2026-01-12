@@ -6,6 +6,7 @@ interface ComponentErrorBoundaryProps {
   children: ReactNode;
   fallback?: (error: Error, retry: () => void) => ReactNode;
   componentName?: string;
+  gracefulFallback?: ReactNode;
 }
 
 interface ComponentErrorBoundaryState {
@@ -46,6 +47,12 @@ export class ComponentErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError && this.state.error) {
+      // Use graceful fallback if provided for degraded functionality
+      if (this.props.gracefulFallback) {
+        return this.props.gracefulFallback;
+      }
+
+      // Otherwise use custom fallback or default error fallback
       return this.props.fallback ? (
         this.props.fallback(this.state.error, this.retry)
       ) : (

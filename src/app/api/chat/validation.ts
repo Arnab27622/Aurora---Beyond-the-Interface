@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   sanitizeBase64,
   detectSuspiciousPatterns,
@@ -11,7 +12,53 @@ import {
   VALID_FILE_TYPES,
   VALID_ROLES,
 } from "./constants";
-import type { ValidationResult, ChatRequest } from "./types";
+import type { ValidationResult } from "./types";
+
+// Zod schemas for enhanced validation
+const messageSchema = z.object({
+  role: z.enum([...VALID_ROLES]),
+  content: z.string()
+    .min(1, "Message content cannot be empty")
+    .max(MAX_MESSAGE_LENGTH, `Message content exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`)
+    .refine((content) => {
+      const suspiciousCheck = detectSuspiciousPatterns(content);
+      return !suspiciousCheck.isSuspicious;
+    }, "Message content contains suspicious patterns"),
+});
+
+const fileContextSchema = z.object({
+  type: z.enum([...VALID_FILE_TYPES]).nullable().optional(),
+  data: z.string()
+    .min(1, "File data cannot be empty")
+    .max(MAX_FILE_DATA_LENGTH, `File data exceeds maximum length of ${MAX_FILE_DATA_LENGTH} characters`)
+    .optional()
+    .nullable()
+    .refine((data) => {
+      if (!data) return true;
+      // Note: We can't access parent context in this simple refine
+      // Additional validation will be done in the main validation function
+      return true;
+    }, "Invalid file data format"),
+  filename: z.string()
+    .max(MAX_FILENAME_LENGTH, `Filename exceeds maximum length of ${MAX_FILENAME_LENGTH} characters`)
+    .optional()
+    .nullable(),
+}).nullable().optional();
+
+const chatRequestSchema = z.object({
+  input: z.string()
+    .min(1, "Input cannot be empty")
+    .max(MAX_INPUT_LENGTH, `Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters`)
+    .refine((input) => input.trim().length > 0, "Input cannot be only whitespace")
+    .refine((input) => {
+      const suspiciousCheck = detectSuspiciousPatterns(input);
+      return !suspiciousCheck.isSuspicious;
+    }, "Input contains suspicious patterns"),
+  messages: z.array(messageSchema)
+    .min(1, "At least one message is required")
+    .max(MAX_MESSAGES, `Messages array exceeds maximum of ${MAX_MESSAGES} items`),
+  fileContext: fileContextSchema,
+});
 
 export function validateInput(input: string): ValidationResult {
   if (!input) {
@@ -166,7 +213,33 @@ export function validateFileContext(fileContext: unknown): ValidationResult {
   return { valid: true };
 }
 
+/**
+ * Enhanced schema-based validation using Zod
+ */
+export function validateRequestWithSchema(body: unknown): ValidationResult {
+  try {
+    chatRequestSchema.parse(body);
+    return { valid: true };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const firstError = error.issues[0];
+      return {
+        valid: false,
+        error: `${firstError.path.join('.')}: ${firstError.message}`,
+      };
+    }
+    return { valid: false, error: "Invalid request format" };
+  }
+}
+
 export function validateRequestBody(body: unknown): ValidationResult {
+  // First try schema-based validation for comprehensive checks
+  const schemaValidation = validateRequestWithSchema(body);
+  if (!schemaValidation.valid) {
+    return schemaValidation;
+  }
+
+  // Fallback to original validation for additional custom checks
   if (!body || typeof body !== "object") {
     return { valid: false, error: "Request body must be a JSON object" };
   }

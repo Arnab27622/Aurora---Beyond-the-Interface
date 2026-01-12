@@ -3,6 +3,8 @@
  * Makes request to /api/chat with stream=true parameter
  */
 
+import { getCSRFToken } from "./csrf";
+
 export interface StreamEvent {
   text?: string;
   done?: boolean;
@@ -20,6 +22,7 @@ export async function* streamChatResponse(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-csrf-token": getCSRFToken(),
       },
       body: JSON.stringify({
         input,

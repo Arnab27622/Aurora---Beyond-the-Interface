@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
 import { streamChatResponse, StreamEvent } from "@/lib/streaming";
+import { getCSRFToken } from "@/lib/csrf";
 
 interface UseGeminiReturn {
   sendMessage: (
@@ -38,7 +39,10 @@ export function useGemini(): UseGeminiReturn {
 
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": getCSRFToken(),
+        },
         body: JSON.stringify({
           input: sanitizedInput,
           messages: sanitizedMessages,
