@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
             async authorize(credentials) {
                 try {
                     if (!credentials?.email || !credentials?.password) {
-                        return null;
+                        throw new Error('Email and password are required');
                     }
 
                     await dbConnect();
@@ -42,7 +42,13 @@ export const authOptions: NextAuthOptions = {
                     const user = await User.findOne({ email: credentials.email });
 
                     if (!user) {
-                        return null;
+                        throw new Error('Invalid email or password');
+                    }
+
+                    // Check if account is locked
+                    if (user.isLocked && user.lockoutUntil && user.lockoutUntil > new Date()) {
+                        const remainingTime = Math.ceil((user.lockoutUntil.getTime() - Date.now()) / (1000 * 60));
+                        throw new Error(`Account is temporarily locked. Please try again in ${remainingTime} minutes.`);
                     }
 
                     const isPasswordValid = await bcrypt.compare(
@@ -51,7 +57,33 @@ export const authOptions: NextAuthOptions = {
                     );
 
                     if (!isPasswordValid) {
-                        return null;
+                        // Increment failed attempts
+                        user.failedAttempts += 1;
+
+                        // Progressive lockout: 5min → 15min → 1hr
+                        if (user.failedAttempts >= 5) {
+                            user.isLocked = true;
+                            let lockoutDuration;
+                            if (user.failedAttempts >= 15) {
+                                lockoutDuration = 60 * 60 * 1000; // 1 hour
+                            } else if (user.failedAttempts >= 10) {
+                                lockoutDuration = 15 * 60 * 1000; // 15 minutes
+                            } else {
+                                lockoutDuration = 5 * 60 * 1000; // 5 minutes
+                            }
+                            user.lockoutUntil = new Date(Date.now() + lockoutDuration);
+                        }
+
+                        await user.save();
+                        throw new Error('Invalid email or password');
+                    }
+
+                    // Reset failed attempts on successful login
+                    if (user.failedAttempts > 0) {
+                        user.failedAttempts = 0;
+                        user.isLocked = false;
+                        user.lockoutUntil = null;
+                        await user.save();
                     }
 
                     return {
@@ -61,7 +93,7 @@ export const authOptions: NextAuthOptions = {
                     };
                 } catch (error) {
                     console.error('Auth error:', error);
-                    return null;
+                    throw error;
                 }
             },
         }),
@@ -95,14 +127,21 @@ export const authOptions: NextAuthOptions = {
                     const existingUser = await User.findOne({ email: user.email });
 
                     if (!existingUser) {
+                        // Create new Google user
                         await User.create({
                             name: user.name,
                             email: user.email,
                             provider: 'google',
                         });
+                    } else if (existingUser.provider === 'credentials') {
+                        // Link Google account to existing credentials account
+                        console.log(`Linking Google account to existing credentials account for ${user.email}`);
+                        existingUser.provider = 'google';
+                        await existingUser.save();
                     }
+                    // If user exists with 'google' provider, just continue (already linked)
                 } catch (error) {
-                    console.error('Error creating Google user:', error);
+                    console.error('Error handling Google sign in:', error);
                     return false;
                 }
             }

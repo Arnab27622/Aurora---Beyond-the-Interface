@@ -15,10 +15,13 @@ export async function callGeminiAPI(
 
     try {
       response = await fetch(
-        `${GEMINI_API_BASE}/${modelId}${GEMINI_GENERATE_ENDPOINT}?key=${apiKey}`,
+        `${GEMINI_API_BASE}/${modelId}${GEMINI_GENERATE_ENDPOINT}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
           body: JSON.stringify({
             contents,
             generationConfig: GENERATION_CONFIG,

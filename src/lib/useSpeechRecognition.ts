@@ -25,11 +25,23 @@ export function useSpeechRecognition(
     }
   }, []);
 
-  const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListeningRef.current) {
+  const startListening = useCallback(async () => {
+    if (!recognitionRef.current || isListeningRef.current) return;
+
+    try {
+      // Request microphone permissions
+      await navigator.mediaDevices.getUserMedia({ audio: true });
       recognitionRef.current.start();
       setIsListening(true);
       isListeningRef.current = true;
+    } catch (error: any) {
+      if (error.name === 'NotAllowedError') {
+        console.error('Microphone access denied. Please allow microphone access in browser settings.');
+      } else {
+        console.error('Error accessing microphone:', error);
+      }
+      setIsListening(false);
+      isListeningRef.current = false;
     }
   }, []);
 
@@ -43,6 +55,11 @@ export function useSpeechRecognition(
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+      };
 
       recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = '';
@@ -61,11 +78,15 @@ export function useSpeechRecognition(
       };
 
       recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          console.error('Microphone access denied. Please grant microphone permissions.');
+        }
         stopListening();
       };
 
       recognitionRef.current.onend = () => {
+        setIsListening(false);
         if (isListeningRef.current) {
           startListening();
         }

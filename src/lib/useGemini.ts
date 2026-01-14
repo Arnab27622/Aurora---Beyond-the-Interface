@@ -1,8 +1,7 @@
 import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
-import { streamChatResponse, StreamEvent } from "@/lib/streaming";
-import { getCSRFToken } from "@/lib/csrf";
+import { streamChatResponse } from "@/lib/streaming";
 
 interface UseGeminiReturn {
   sendMessage: (
@@ -21,6 +20,39 @@ interface UseGeminiReturn {
   isConfigured: boolean;
 }
 
+let cachedCSRFToken: string | null = null;
+
+/**
+ * Clear cached CSRF token (useful after validation failure)
+ */
+function clearCSRFTokenCache(): void {
+  cachedCSRFToken = null;
+}
+
+/**
+ * Fetch fresh CSRF token from server
+ */
+async function fetchCSRFToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedCSRFToken) {
+    return cachedCSRFToken;
+  }
+
+  try {
+    const response = await fetch("/api/csrf");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+    }
+    const data = await response.json();
+    cachedCSRFToken = data.token;
+    return data.token;
+  } catch (error) {
+    clearCSRFTokenCache();
+    throw new Error(
+      `Failed to fetch CSRF token: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
 export function useGemini(): UseGeminiReturn {
   const isConfigured = true;
 
@@ -37,11 +69,14 @@ export function useGemini(): UseGeminiReturn {
         content: sanitizeInput(m.content),
       }));
 
-      const response = await fetch("/api/chat", {
+      // Fetch CSRF token with retry logic for stale tokens
+      let csrfToken = await fetchCSRFToken();
+
+      let response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-csrf-token": getCSRFToken(),
+          "x-csrf-token": csrfToken,
         },
         body: JSON.stringify({
           input: sanitizedInput,
@@ -49,6 +84,25 @@ export function useGemini(): UseGeminiReturn {
           fileContext,
         }),
       });
+
+      // If CSRF token is invalid, clear cache and retry with fresh token
+      if (response.status === 403) {
+        clearCSRFTokenCache();
+        csrfToken = await fetchCSRFToken(true);
+
+        response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+          },
+          body: JSON.stringify({
+            input: sanitizedInput,
+            messages: sanitizedMessages,
+            fileContext,
+          }),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

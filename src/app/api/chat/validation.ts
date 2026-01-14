@@ -14,6 +14,59 @@ import {
 } from "./constants";
 import type { ValidationResult } from "./types";
 
+/**
+ * Detect only XSS/HTML injection patterns (less strict for file content)
+ * Used for message history which may contain legitimate file data
+ */
+function detectCriticalSecurityPatterns(input: string): {
+  isSuspicious: boolean;
+  reason?: string;
+} {
+  if (typeof input !== "string") {
+    return { isSuspicious: true, reason: "Input must be a string" };
+  }
+
+  // Only check for actual code injection attacks, not data patterns
+  const criticalPatterns = [
+    // XSS patterns
+    /<script/i,
+    /<iframe/i,
+    /javascript:/i,
+    /vbscript:/i,
+    /data:text\/html/i,
+    /data:text\/javascript/i,
+    /expression\s*\(/i,
+
+    // Event handlers
+    /on\w+\s*=\s*["'][^"']*["']/i,
+    /on\w+\s*=\s*[^\s>]*/i,
+
+    // Path traversal
+    /\.\.[\/\\]/,
+    /%2e%2e[\/\\]/i,
+
+    // Dangerous HTML tags
+    /<object/i,
+    /<embed/i,
+    /<applet/i,
+    /<meta/i,
+    /<link/i,
+    /<base/i,
+    /file:\/\//i,
+  ];
+
+  for (const pattern of criticalPatterns) {
+    if (pattern.test(input)) {
+      return {
+        isSuspicious: true,
+        reason: `Detected potentially malicious pattern: ${pattern.source}`,
+      };
+    }
+  }
+
+  return { isSuspicious: false };
+}
+
 // Zod schemas for enhanced validation
 const messageSchema = z.object({
   role: z.enum([...VALID_ROLES]),
@@ -21,7 +74,7 @@ const messageSchema = z.object({
     .min(1, "Message content cannot be empty")
     .max(MAX_MESSAGE_LENGTH, `Message content exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`)
     .refine((content) => {
-      const suspiciousCheck = detectSuspiciousPatterns(content);
+      const suspiciousCheck = detectCriticalSecurityPatterns(content);
       return !suspiciousCheck.isSuspicious;
     }, "Message content contains suspicious patterns"),
 });
@@ -135,7 +188,8 @@ export function validateMessages(messages: unknown): ValidationResult {
       };
     }
 
-    const suspiciousCheck = detectSuspiciousPatterns(
+    // Use less strict pattern detection for message history (file content may contain data patterns)
+    const suspiciousCheck = detectCriticalSecurityPatterns(
       typedMsg.content as string
     );
     if (suspiciousCheck.isSuspicious) {

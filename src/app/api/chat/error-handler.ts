@@ -1,4 +1,5 @@
 import type { ApiErrorResponse } from "./types";
+import { logError } from "@/lib/logger";
 
 export function createErrorResponse(
   message: string,
@@ -40,7 +41,7 @@ export function createGeminiErrorResponse(
           : "API_ERROR";
 
   // Log sanitized error for debugging without exposing sensitive data
-  console.error(`Gemini API error [${status}]:`, sanitizedStatusText);
+  logError(`Gemini API error [${status}]`, sanitizedStatusText, "GeminiAPI");
 
   return [
     { error: errorCode, message: errorMessage },

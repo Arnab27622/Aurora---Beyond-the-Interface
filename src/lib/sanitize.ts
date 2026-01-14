@@ -109,6 +109,7 @@ export function escapeHtml(text: string): string {
 /**
  * Check if input contains suspicious patterns
  * Enhanced with more comprehensive security checks
+ * Focuses on patterns that indicate actual attacks, not innocent characters
  */
 export function detectSuspiciousPatterns(input: string): {
   isSuspicious: boolean;
@@ -137,17 +138,16 @@ export function detectSuspiciousPatterns(input: string): {
     /onmouseover\s*=/i,
     /onsubmit\s*=/i,
 
-    // SQL injection patterns
+    // SQL injection patterns - only when combined with SQL keywords
     /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b.*\b(select|from|where|and|or)\b)/i,
-    /(-{2,}|\/\*|\*\/)/,
-    /('|(\\x27)|(\\x2D))/,
+    /(-{2,}.*\b(select|union|drop|insert|update|delete)\b)/i,
 
     // Path traversal
     /\.\.[\/\\]/,
     /%2e%2e[\/\\]/i,
 
-    // Command injection
-    /[;&|`$()]/,
+    // Command injection - only when shell commands are present
+    /(bash|sh|cmd|powershell|exec|system)\s*[\(\s]*[;&|`$]/i,
 
     // Other dangerous patterns
     /<object/i,

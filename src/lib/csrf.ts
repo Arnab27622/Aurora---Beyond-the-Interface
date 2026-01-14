@@ -2,31 +2,48 @@ import Tokens from 'csrf';
 
 /**
  * CSRF protection utilities for API routes
+ * Uses the csrf library to generate and verify tokens using a shared secret
  */
 const tokens = new Tokens();
 
 /**
- * Generate a new CSRF token
+ * Get the CSRF secret, ensuring it's always consistent
  */
-export function generateCSRFToken(): string {
-    return tokens.create(process.env.CSRF_SECRET || 'default-secret-change-in-production');
+function getCSRFSecret(): string {
+    const secret = process.env.CSRF_SECRET;
+    if (!secret) {
+        throw new Error('CSRF_SECRET environment variable is not configured. Please set it in your environment configuration.');
+    }
+    return secret;
 }
 
 /**
- * Validate a CSRF token
+ * Generate a new CSRF token
+ * Returns a token that can be verified later with the same secret
  */
-export function validateCSRFToken(token: string): boolean {
+export function generateCSRFToken(): string {
+    const secret = getCSRFSecret();
     try {
-        return tokens.verify(process.env.CSRF_SECRET || 'default-secret-change-in-production', token);
-    } catch {
-        return false;
+        const token = tokens.create(secret);
+        return token;
+    } catch (error) {
+        console.error('Failed to generate CSRF token:', error);
+        throw new Error('Failed to generate CSRF token');
     }
 }
 
 /**
- * Get CSRF token for client-side use
- * This should be called from an API route that returns the token to the client
+ * Validate a CSRF token
+ * The token is verified cryptographically without needing storage
  */
-export function getCSRFToken(): string {
-    return generateCSRFToken();
+export function validateCSRFToken(token: string): boolean {
+    const secret = getCSRFSecret();
+    try {
+        const isValid = tokens.verify(secret, token);
+        return isValid;
+    } catch (error) {
+        // Log validation failure without exposing token details
+        console.warn('CSRF token validation failed - token rejected');
+        return false;
+    }
 }

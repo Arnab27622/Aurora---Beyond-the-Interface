@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { validateRequestBody } from "./validation";
 import { sanitizeRequestData } from "./sanitizer";
 import { createErrorResponse } from "./error-handler";
@@ -6,6 +7,7 @@ import { prepareContentWithFile, buildGeminiContents } from "./content-builder";
 import { callGeminiAPI, extractBotResponse } from "./gemini-client";
 import { streamFromGemini, createStreamResponse } from "./streaming";
 import { validateCSRFToken } from "@/lib/csrf";
+import { logWarn, logError } from "@/lib/logger";
 import type { ChatRequest } from "./types";
 
 export async function POST(request: NextRequest) {
@@ -19,9 +21,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(error, { status });
   }
 
+  // Get user session for CSRF validation
+  const token = await getToken({ req: request });
+  if (!token) {
+    const [error, status] = createErrorResponse(
+      "Unauthorized",
+      "UNAUTHORIZED",
+      401
+    );
+    return NextResponse.json(error, { status });
+  }
+
   // Validate CSRF token
   const csrfToken = request.headers.get("x-csrf-token");
   if (!csrfToken) {
+    logWarn("CSRF token missing from request", undefined, "ChatAPI");
     const [error, status] = createErrorResponse(
       "CSRF token missing",
       "CSRF_MISSING",
@@ -32,6 +46,7 @@ export async function POST(request: NextRequest) {
 
   const isValidCSRF = validateCSRFToken(csrfToken);
   if (!isValidCSRF) {
+    logWarn("CSRF token validation failed", undefined, "ChatAPI");
     const [error, status] = createErrorResponse(
       "Invalid CSRF token",
       "CSRF_INVALID",
@@ -88,7 +103,7 @@ export async function POST(request: NextRequest) {
     const MODEL_ID = process.env.GEMINI_MODEL_ID;
 
     if (!API_KEY || !API_KEY.trim()) {
-      console.error("GEMINI_API_KEY is not configured");
+      logError("GEMINI_API_KEY is not configured", "Missing environment variable", "ChatAPI");
       const [error, status] = createErrorResponse(
         "Server configuration error: API key not found",
         "CONFIG_ERROR",
@@ -98,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!MODEL_ID || !MODEL_ID.trim()) {
-      console.error("GEMINI_MODEL_ID is not configured");
+      logError("GEMINI_MODEL_ID is not configured", "Missing environment variable", "ChatAPI");
       const [error, status] = createErrorResponse(
         "Server configuration error: Model ID not found",
         "CONFIG_ERROR",
@@ -155,7 +170,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Unexpected error in chat API:", error);
+    logError("Unexpected error in chat API", error, "ChatAPI");
 
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";

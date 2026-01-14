@@ -3,7 +3,38 @@
  * Makes request to /api/chat with stream=true parameter
  */
 
-import { getCSRFToken } from "./csrf";
+let cachedCSRFToken: string | null = null;
+
+/**
+ * Clear cached CSRF token (useful after validation failure)
+ */
+function clearCSRFTokenCache(): void {
+  cachedCSRFToken = null;
+}
+
+/**
+ * Fetch fresh CSRF token from server
+ */
+async function fetchCSRFToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedCSRFToken) {
+    return cachedCSRFToken;
+  }
+
+  try {
+    const response = await fetch("/api/csrf");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+    }
+    const data = await response.json();
+    cachedCSRFToken = data.token;
+    return data.token;
+  } catch (error) {
+    clearCSRFTokenCache();
+    throw new Error(
+      `Failed to fetch CSRF token: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
 
 export interface StreamEvent {
   text?: string;
@@ -18,11 +49,14 @@ export async function* streamChatResponse(
   fileContext: any
 ): AsyncGenerator<StreamEvent, void, unknown> {
   try {
-    const response = await fetch("/api/chat?stream=true", {
+    // Fetch CSRF token with retry logic for stale tokens
+    let csrfToken = await fetchCSRFToken();
+
+    let response = await fetch("/api/chat?stream=true", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-csrf-token": getCSRFToken(),
+        "x-csrf-token": csrfToken,
       },
       body: JSON.stringify({
         input,
@@ -30,6 +64,29 @@ export async function* streamChatResponse(
         fileContext,
       }),
     });
+
+    // If CSRF token is invalid, clear cache and retry with fresh token
+    if (response.status === 403) {
+      // Check if error message indicates CSRF issue
+      const errorData = await response.json().catch(() => ({}));
+      if ((errorData as any).error?.includes?.('CSRF') || (errorData as any).error?.startsWith?.('CSRF')) {
+        clearCSRFTokenCache();
+        csrfToken = await fetchCSRFToken(true);
+
+        response = await fetch("/api/chat?stream=true", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+          },
+          body: JSON.stringify({
+            input,
+            messages,
+            fileContext,
+          }),
+        });
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

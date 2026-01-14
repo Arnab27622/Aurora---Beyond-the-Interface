@@ -4,6 +4,13 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import ChatSessionModel from "@/lib/models/ChatSession";
 
+/**
+ * Escape special characters in regex to prevent ReDoS and regex injection
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export async function GET(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -18,7 +25,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ results: [] });
         }
 
+        // Limit query length to prevent ReDoS attacks
+        if (query.length > 200) {
+            return NextResponse.json(
+                { error: "Search query too long" },
+                { status: 400 }
+            );
+        }
+
         await dbConnect();
+
+        // Escape regex special characters to prevent injection
+        const escapedQuery = escapeRegex(query.trim());
 
         // MongoDB aggregation pipeline to search within messages
         const results = await ChatSessionModel.aggregate([
@@ -31,7 +49,7 @@ export async function GET(request: NextRequest) {
             {
                 $match: {
                     "messages.content": {
-                        $regex: query.trim(),
+                        $regex: escapedQuery,
                         $options: "i" // case-insensitive
                     }
                 }
@@ -49,6 +67,9 @@ export async function GET(request: NextRequest) {
             },
             {
                 $sort: { timestamp: -1 }
+            },
+            {
+                $limit: 100  // Limit results to prevent excessive data transfer
             }
         ]);
 

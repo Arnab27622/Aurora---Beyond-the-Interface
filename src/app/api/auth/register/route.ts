@@ -2,14 +2,104 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import bcrypt from 'bcryptjs';
+import zxcvbn from 'zxcvbn';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { logError, logWarn, logInfo } from '@/lib/logger';
+import { registerSchema } from '@/lib/validations/auth';
+import { z } from 'zod';
+
+/**
+ * Common weak passwords to blacklist
+ */
+const WEAK_PASSWORD_PATTERNS = [
+    'password', 'password123', 'admin', 'admin123', '123456', '12345678',
+    'qwerty', 'abc123', 'letmein', 'welcome', 'monkey', 'dragon',
+    '111111', '1234567', '12345', '123123', '1234567890', 'email@email.com'
+];
+
+/**
+ * Validate password strength using zxcvbn and common pattern blacklist
+ * Requirements: At least 8 characters, score >= 2 (fair), and not in blacklist
+ */
+function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+    if (!password || password.length < 8) {
+        return { valid: false, error: 'Password must be at least 8 characters long' };
+    }
+
+    if (password.length > 128) {
+        return { valid: false, error: 'Password must not exceed 128 characters' };
+    }
+
+    // Check against common weak passwords (case-insensitive)
+    const lowerPassword = password.toLowerCase();
+    if (WEAK_PASSWORD_PATTERNS.some(pattern => lowerPassword === pattern)) {
+        return { valid: false, error: 'This password is too common. Please choose a stronger password' };
+    }
+
+    // Use zxcvbn for entropy-based strength checking
+    const result = zxcvbn(password);
+    
+    // Require at least "fair" strength (score 2+)
+    if (result.score < 2) {
+        return { 
+            valid: false, 
+            error: 'Password is too weak. Use a mix of uppercase, lowercase, numbers, and special characters' 
+        };
+    }
+
+    return { valid: true };
+}
 
 export async function POST(request: NextRequest) {
     try {
-        const { name, email, password } = await request.json();
+        // Apply rate limiting: 3 requests per minute per IP (stricter than signin)
+        const clientIp = getClientIp(request);
+        const rateLimit = checkRateLimit(clientIp, 3, 60000);
 
-        if (!name || !email || !password) {
+        if (!rateLimit.allowed) {
             return NextResponse.json(
-                { error: 'Missing required fields' },
+                { 
+                    error: 'Too many registration attempts. Please try again later.',
+                    code: 'RATE_LIMITED',
+                    retryAfter: Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
+                },
+                { 
+                    status: 429,
+                    headers: {
+                        'Retry-After': Math.ceil((rateLimit.resetAt - Date.now()) / 1000).toString()
+                    }
+                }
+            );
+        }
+
+        const body = await request.json();
+
+        // Validate request body with Zod
+        let validatedData;
+        try {
+            validatedData = registerSchema.parse(body);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                const errorMessage = error.issues[0]?.message || 'Invalid input';
+                logWarn('Registration validation failed', { issues: error.issues }, 'REGISTER');
+                return NextResponse.json(
+                    { error: errorMessage },
+                    { status: 400 }
+                );
+            }
+            throw error;
+        }
+
+        const { name, email, password } = validatedData;
+
+        // Validate password strength
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+            return NextResponse.json(
+                { 
+                    error: passwordValidation.error,
+                    code: 'WEAK_PASSWORD'
+                },
                 { status: 400 }
             );
         }
@@ -19,6 +109,7 @@ export async function POST(request: NextRequest) {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            logWarn('Registration attempt with existing email', { email: email.substring(0, 50) }, 'REGISTER');
             return NextResponse.json(
                 { error: 'User already exists' },
                 { status: 400 }
@@ -35,12 +126,14 @@ export async function POST(request: NextRequest) {
             password: hashedPassword,
         });
 
+        logInfo(`New user registered: ${user.email}`, 'REGISTER');
+
         return NextResponse.json(
             { message: 'User created successfully', userId: user._id },
             { status: 201 }
         );
     } catch (error) {
-        console.error('Registration error:', error);
+        logError('Registration error', error, 'REGISTER');
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

@@ -4,16 +4,31 @@ import type { NextRequest } from 'next/server';
 
 export default withAuth(
     function middleware(req: NextRequest) {
+        // Enforce HTTPS in production
+        if (process.env.NODE_ENV === 'production') {
+            const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol;
+            if (proto === 'http:') {
+                return NextResponse.redirect(
+                    `https://${req.headers.get('host')}${req.nextUrl.pathname}${req.nextUrl.search}`,
+                    { status: 301 }
+                );
+            }
+        }
+
         const res = NextResponse.next();
 
         // Content Security Policy headers
+        const isDevelopment = process.env.NODE_ENV === 'development';
         const cspHeader = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            isDevelopment 
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com" 
+                : "script-src 'self' https://cdnjs.cloudflare.com",
+            "worker-src 'self' blob:",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https:",
-            "font-src 'self'",
-            "connect-src 'self' https://generativelanguage.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com",
+            "connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com",
             "media-src 'self'",
             "object-src 'none'",
             "frame-src 'none'",
@@ -24,11 +39,21 @@ export default withAuth(
 
         res.headers.set('Content-Security-Policy', cspHeader);
 
-        // Additional security headers
+        // Security headers for protection against common attacks
         res.headers.set('X-Frame-Options', 'DENY');
         res.headers.set('X-Content-Type-Options', 'nosniff');
+        res.headers.set('X-XSS-Protection', '1; mode=block');
+        res.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
         res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        res.headers.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
+        
+        // HSTS (HTTP Strict Transport Security) - enforces HTTPS
+        if (process.env.NODE_ENV === 'production') {
+            res.headers.set(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains; preload'
+            );
+        }
 
         return res;
     },
@@ -40,5 +65,7 @@ export default withAuth(
 );
 
 export const config = {
-    matcher: ['/api/chat/:path*'],
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico|public|auth).*)',
+    ],
 };

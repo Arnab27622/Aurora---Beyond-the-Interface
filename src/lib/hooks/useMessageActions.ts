@@ -1,6 +1,27 @@
 import { Message, FileContextType } from "@/lib/types";
 import { logError } from "@/lib/errorHandler";
 
+let cachedCSRFToken: string | null = null;
+
+async function getCSRFToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedCSRFToken) {
+    return cachedCSRFToken;
+  }
+
+  try {
+    const response = await fetch("/api/csrf");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+    }
+    const data = await response.json();
+    cachedCSRFToken = data.token;
+    return data.token;
+  } catch (error) {
+    cachedCSRFToken = null;
+    throw error;
+  }
+}
+
 export const useMessageActions = (
   sendGeminiStreamMessage: any,
   messages: Message[],
@@ -37,10 +58,13 @@ export const useMessageActions = (
     if (!currentSessionId) {
       try {
         const title = input.trim().substring(0, 30) + (input.trim().length > 30 ? "..." : "") || "New Chat";
+        const csrfToken = await getCSRFToken();
+        
         const response = await fetch("/api/chat-sessions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
           },
           body: JSON.stringify({
             title,

@@ -1,6 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { Message, ChatSession } from "@/lib/types";
 
+let cachedCSRFToken: string | null = null;
+
+async function getCSRFToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedCSRFToken) {
+    return cachedCSRFToken;
+  }
+
+  try {
+    const response = await fetch("/api/csrf");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+    }
+    const data = await response.json();
+    cachedCSRFToken = data.token;
+    return data.token;
+  } catch (error) {
+    cachedCSRFToken = null;
+    throw error;
+  }
+}
+
 interface UseChatSessionsReturn {
   chatSessions: ChatSession[];
   currentSessionId: string | null;
@@ -66,11 +87,13 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
     const saveSession = async () => {
       try {
         const title = messages[0]?.content.substring(0, 30) + (messages[0]?.content.length > 30 ? "..." : "") || "New Chat";
+        const csrfToken = await getCSRFToken();
 
         const response = await fetch("/api/chat-sessions", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
           },
           body: JSON.stringify({
             sessionId: currentSessionId,
@@ -108,11 +131,13 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
       try {
         const title = messages[0].content.substring(0, 30) +
           (messages[0].content.length > 30 ? "..." : "");
+        const csrfToken = await getCSRFToken();
 
         const response = await fetch("/api/chat-sessions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
           },
           body: JSON.stringify({
             title,
@@ -170,8 +195,13 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
       e.stopPropagation();
 
       try {
+        const csrfToken = await getCSRFToken();
+        
         const response = await fetch(`/api/chat-sessions?sessionId=${sessionId}`, {
           method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+          },
         });
 
         if (response.ok) {
@@ -212,8 +242,13 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
     if (!userId || !currentSessionId) return;
 
     try {
+      const csrfToken = await getCSRFToken();
+      
       const response = await fetch(`/api/chat-sessions?sessionId=${currentSessionId}`, {
         method: "DELETE",
+        headers: {
+          "x-csrf-token": csrfToken,
+        },
       });
 
       if (response.ok) {
