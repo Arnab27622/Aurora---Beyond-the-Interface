@@ -21,13 +21,11 @@ export default withAuth(
         const isDevelopment = process.env.NODE_ENV === 'development';
         const cspHeader = [
             "default-src 'self'",
-            isDevelopment 
-                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com" 
-                : "script-src 'self' https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
             "worker-src 'self' blob:",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: https:",
-            "font-src 'self' https://fonts.gstatic.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "img-src 'self' data: https: blob:",
+            "font-src 'self' https://fonts.gstatic.com data:",
             "connect-src 'self' https://generativelanguage.googleapis.com https://cdnjs.cloudflare.com",
             "media-src 'self'",
             "object-src 'none'",
