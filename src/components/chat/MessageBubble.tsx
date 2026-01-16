@@ -11,6 +11,7 @@
  */
 
 import React from "react";
+import remarkGfm from "remark-gfm";
 import ReactMarkdown, { Components } from "react-markdown";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -50,7 +51,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         >
             {children}
             <CopyButton text={content} darkMode={darkMode} position={role === "bot" ? "bottom" : "top"} />
-            <ReactMarkdown components={markdownComponents}>
+            <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                 {content}
             </ReactMarkdown>
             {isCached && role === "bot" && (
