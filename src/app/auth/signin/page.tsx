@@ -163,7 +163,7 @@ export default function SignIn() {
      */
     return (
         <div className={cn(
-            "flex flex-col h-screen",
+            "flex flex-col min-h-screen",
             darkMode ? "bg-[#1e1e1e] text-white" : "bg-white text-black"
         )}>
             <ChatHeader
