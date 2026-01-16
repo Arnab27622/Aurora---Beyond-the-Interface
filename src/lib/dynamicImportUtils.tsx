@@ -1,3 +1,17 @@
+/**
+ * Dynamic Component Utilities
+ * 
+ * Helpers for dynamic imports with loading and error states:
+ * - Fallback components for loading states
+ * - Error boundary fallback display
+ * - SSR control for components
+ * 
+ * Features:
+ * - Custom loading and error UI components
+ * - Configurable SSR behavior
+ * - TypeScript generics for type safety
+ */
+
 'use client';
 
 import dynamic from 'next/dynamic';

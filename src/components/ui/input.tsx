@@ -1,3 +1,16 @@
+/**
+ * Input Component
+ * 
+ * Accessible text input field component with theme support.
+ * Features:
+ * - Full accessibility with aria attributes
+ * - Disabled state styling
+ * - Focus-visible ring for keyboard navigation
+ * - Theme-aware colors (light/dark mode)
+ * - Support for all HTML input attributes
+ * - File input styling
+ */
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 

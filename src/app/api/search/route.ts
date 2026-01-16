@@ -1,3 +1,40 @@
+/**
+ * Message Search API
+ * 
+ * Searches through user's chat session messages using MongoDB text search.
+ * 
+ * Features:
+ * - Case-insensitive regex search within message content
+ * - ReDoS (Regular Expression Denial of Service) protection
+ * - Regex injection prevention via character escaping
+ * - Result limiting to prevent excessive data transfer
+ * - MongoDB aggregation pipeline for efficient querying
+ * 
+ * Authentication: Required (NextAuth session)
+ * Method: GET
+ * 
+ * Query parameters:
+ * - q: Search query string (max 200 characters)
+ * 
+ * Response:
+ * {
+ *   results: [
+ *     {
+ *       sessionId: string,
+ *       sessionTitle: string,
+ *       messageId: string,
+ *       messageContent: string,
+ *       messageRole: "user" | "bot",
+ *       timestamp: number
+ *     }
+ *   ]
+ * }
+ * 
+ * Limits:
+ * - Max 100 results per search
+ * - Max 200 character query length
+ * - 30 second database timeout
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";

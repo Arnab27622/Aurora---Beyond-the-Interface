@@ -1,3 +1,23 @@
+/**
+ * MongoDB ChatSession Model
+ * 
+ * Stores persistent chat history with messages and attachments
+ * 
+ * Schema:
+ * - userId: User who owns this session (indexed)
+ * - id: Unique session identifier
+ * - title: User-friendly session title
+ * - timestamp: Creation time for sorting
+ * - messages: Array of Message documents with file attachments
+ * 
+ * Features:
+ * - Compound index on userId + timestamp for efficient queries
+ * - Message embedding for quick access
+ * - File context storage for document context
+ * - Multiple response tracking per message
+ * - Automatic timestamps (createdAt, updatedAt)
+ */
+
 import mongoose from 'mongoose';
 
 const FileContextSchema = new mongoose.Schema({

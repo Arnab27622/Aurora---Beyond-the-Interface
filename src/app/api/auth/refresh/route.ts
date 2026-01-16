@@ -1,9 +1,52 @@
+/**
+ * Token Refresh API
+ * 
+ * Refreshes expired access tokens using refresh tokens.
+ * Implements refresh token rotation for security.
+ * 
+ * Features:
+ * - JWT token verification and validation
+ * - Refresh token rotation (old token replaced with new)
+ * - Access token generation (15-minute expiry)
+ * - Refresh token generation (7-day expiry)
+ * - Rate limiting (10 requests per minute per IP)
+ * - Token expiration validation
+ * 
+ * Authentication: Not required (uses refresh token)
+ * Method: POST
+ * 
+ * Request body:
+ * { refreshToken: string }
+ * 
+ * Response:
+ * Success (200): {
+ *   accessToken: string,
+ *   refreshToken: string (new rotated token),
+ *   expiresIn: number (seconds)
+ * }
+ * 
+ * Error responses:
+ * - 400: Missing refresh token
+ * - 401: Invalid or expired refresh token
+ * - 429: Rate limited
+ * - 500: Server error
+ * 
+ * Security:
+ * - Tokens validated in database against stored token
+ * - Expiration dates checked
+ * - Old refresh token invalidated after rotation
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
+/**
+ * POST /api/auth/refresh
+ * 
+ * Exchanges a refresh token for new access and refresh tokens.
+ */
 export async function POST(request: NextRequest) {
     try {
         // Apply rate limiting: 10 requests per minute per IP (more lenient for token refresh)

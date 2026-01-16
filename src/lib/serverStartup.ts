@@ -17,7 +17,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Export validation status for potential runtime use
+/** Is the environment configuration valid? */
 export const isEnvironmentValid = envValidation.isValid;
+/** Validated environment configuration */
 export const environmentConfig = envValidation.config || {
   geminiApiKey: "",
   geminiModelId: "",

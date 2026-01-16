@@ -1,5 +1,35 @@
+/**
+ * Scroll Position Management Hook
+ * 
+ * Manages auto-scrolling and scroll state for message list:
+ * - Detects when user is at bottom of scroll
+ * - Determines if scrollbar is visible
+ * - Auto-scrolls to bottom on new messages (if user was at bottom)
+ * - Smooth scroll behavior
+ * 
+ * Features:
+ * - Debounced scroll event listeners
+ * - Configurable scroll tolerance (10px)
+ * - Dynamic scrollbar detection
+ * - Automatic cleanup on unmount
+ * - Respects user scroll position (doesn't force scroll up)
+ */
+
 import { useState, useEffect, useRef } from "react";
 
+/**
+ * Scroll Position Management Hook
+ * 
+ * Manages auto-scrolling and scroll state for message list:
+ * - Detects when user is at bottom of scroll
+ * - Determines if scrollbar is visible
+ * - Auto-scrolls to bottom on new messages
+ * - Smooth scroll behavior with debouncing
+ * 
+ * @param isMounted Whether component is mounted
+ * @param messagesLength Number of messages to trigger scroll check
+ * @returns Object containing scroll refs and state
+ */
 export const useScrollManagement = (isMounted: boolean, messagesLength: number) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasScrollbar, setHasScrollbar] = useState(false);

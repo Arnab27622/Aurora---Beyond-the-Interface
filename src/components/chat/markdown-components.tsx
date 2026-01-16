@@ -1,3 +1,16 @@
+/**
+ * Markdown Components Configuration
+ * 
+ * Custom styling for markdown elements rendered in chat messages.
+ * Includes:
+ * - Code blocks with copy button and syntax highlighting
+ * - Tables with responsive overflow
+ * - Links that open in new tabs
+ * - Blockquotes with left border styling
+ * - Lists (ordered and unordered)
+ * - Theme-aware colors for light and dark modes
+ */
+
 import { Components } from "react-markdown";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/copy-button";

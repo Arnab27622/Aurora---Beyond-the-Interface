@@ -1,3 +1,11 @@
+/**
+ * FileContextIndicator Component
+ * 
+ * Shows a compact indicator of the currently selected/attached file.
+ * Displays file icon, truncated filename, and a clear button.
+ * Positioned above the chat input to show active file context.
+ */
+
 import { File, ImageIcon, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileContextType } from "@/lib/types";

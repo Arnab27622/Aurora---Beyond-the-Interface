@@ -1,9 +1,37 @@
+/**
+ * File Upload and Processing Hook
+ * 
+ * Handles file uploads with automatic text extraction:
+ * - Documents: PDF, DOCX, XLSX, CSV, PPTX
+ * - Images: JPEG, PNG, GIF, BMP, WebP
+ * 
+ * Features:
+ * - Format detection by file extension and MIME type
+ * - Lazy loading of extraction libraries
+ * - Base64 encoding for binary storage
+ * - Error handling with fallback messages
+ * - Automatic input clearing after upload
+ */
+
 import { useRef } from "react";
 import { FileContextType } from "@/lib/types";
 import { useFileLoader, SupportedFileType } from "@/lib/useFileLoader";
 import { usePDFProcessing } from "@/lib/usePDFLoader";
 import { logError } from "@/lib/errorHandler";
 
+/**
+ * File Upload and Processing Hook
+ * 
+ * Handles file uploads with automatic text extraction:
+ * - Documents: PDF, DOCX, XLSX, CSV, PPTX
+ * - Images: JPEG, PNG, GIF, BMP, WebP
+ * - Format detection and error handling
+ * - Automatic base64 encoding and text extraction
+ * 
+ * @param setFileContext State setter for file context
+ * @param setIsFileLoading State setter for loading status
+ * @returns Object containing refs and handlers for file uploads
+ */
 export const useFileHandling = (
   setFileContext: (context: FileContextType) => void,
   setIsFileLoading: (loading: boolean) => void

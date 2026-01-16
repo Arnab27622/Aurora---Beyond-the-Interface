@@ -1,3 +1,11 @@
+/**
+ * RegenerateButton Component
+ * 
+ * Allows users to regenerate the current bot response.
+ * Shows loading state while regeneration is in progress.
+ * Disabled when already regenerating.
+ */
+
 import React from "react";
 import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -1,3 +1,10 @@
+/**
+ * CachedBadge Component
+ * 
+ * Displays a small badge indicating that the bot response was retrieved from cache.
+ * Shows a lightning bolt icon with "Cached response" text to inform users about response source.
+ */
+
 import React from "react";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";

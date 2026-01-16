@@ -1,6 +1,38 @@
+/**
+ * Error Response Handler
+ * 
+ * Creates standardized error responses for the chat API.
+ * Handles error message sanitization to prevent information leakage.
+ * 
+ * Features:
+ * - Consistent error response format
+ * - Sensitive data redaction (API keys, tokens, emails)
+ * - Error message length limiting
+ * - Gemini API error classification
+ * - Proper HTTP status code mapping
+ * 
+ * Error codes:
+ * - VALIDATION_ERROR (400): Request validation failed
+ * - INVALID_JSON (400): JSON parsing failed
+ * - INVALID_CONTENT_TYPE (400): Wrong Content-Type header
+ * - CONFIG_ERROR (500): Server configuration missing
+ * - CSRF_INVALID (403): CSRF token validation failed
+ * - REQUEST_TIMEOUT (504): API request timeout
+ * - NETWORK_ERROR (503): Network connectivity issue
+ * - RATE_LIMITED (429): Too many API requests
+ * - AUTH_ERROR (401/403): Authentication failed
+ */
 import type { ApiErrorResponse } from "./types";
 import { logError } from "@/lib/logger";
 
+/**
+ * Creates standardized error response tuple.
+ * 
+ * @param message - User-facing error message
+ * @param code - Error code identifier
+ * @param statusCode - HTTP status code
+ * @returns {[ApiErrorResponse, number]} Error object and HTTP status
+ */
 export function createErrorResponse(
   message: string,
   code: string = "UNKNOWN_ERROR",
@@ -15,6 +47,21 @@ export function createErrorResponse(
   ];
 }
 
+/**
+ * Creates error response for Gemini API errors.
+ * Maps HTTP status codes to appropriate error messages and codes.
+ * Sanitizes error messages to prevent sensitive data leakage.
+ * 
+ * Status code mapping:
+ * - 429: Rate limit exceeded
+ * - 401/403: Authentication failed
+ * - 400: Invalid request
+ * - Others: Generic API error
+ * 
+ * @param status - HTTP status from Gemini API
+ * @param apiErrorMessage - Error message from API
+ * @returns {[ApiErrorResponse, number]} Sanitized error object and status
+ */
 export function createGeminiErrorResponse(
   status: number,
   apiErrorMessage: unknown

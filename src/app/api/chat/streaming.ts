@@ -1,6 +1,32 @@
+/**
+ * Streaming Response Handler
+ * 
+ * Manages Server-Sent Events (SSE) streaming from Gemini API.
+ * Handles real-time chunked responses and formats them for client consumption.
+ * 
+ * Features:
+ * - Async generator for lazy evaluation of stream chunks
+ * - Error handling and timeout management
+ * - SSE format parsing and relay
+ * - Proper stream cleanup on completion or error
+ * 
+ * Response format:
+ * - data: {"text": "chunk"}\n\n - Text chunks
+ * - data: {"done": true}\n\n - Stream completion
+ * - data: {"error": "message"}\n\n - Stream errors
+ */
 import { REQUEST_TIMEOUT_MS, GEMINI_API_BASE, GEMINI_STREAM_ENDPOINT, GENERATION_CONFIG } from "./constants";
 import type { StreamChunk } from "./types";
 
+/**
+ * Streams response chunks from Gemini API.
+ * Connects to streaming endpoint and yields text chunks as they arrive.
+ * 
+ * @param apiKey - Gemini API key
+ * @param modelId - Model identifier (e.g., gemini-2.0-flash)
+ * @param contents - Formatted request contents for Gemini API
+ * @yields {string} Text chunks from API response
+ */
 export async function* streamFromGemini(
   apiKey: string,
   modelId: string,
@@ -79,6 +105,14 @@ export async function* streamFromGemini(
   }
 }
 
+/**
+ * Converts async generator into ReadableStream for HTTP response.
+ * Handles backpressure and error propagation.
+ * 
+ * @param encoder - TextEncoder instance for encoding chunks
+ * @param streamGenerator - Async generator yielding text chunks
+ * @returns {ReadableStream<Uint8Array>} HTTP-compatible stream
+ */
 export function createStreamResponse(
   encoder: TextEncoder,
   streamGenerator: AsyncGenerator<string>

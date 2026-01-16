@@ -1,3 +1,43 @@
+/**
+ * Sign In Page
+ * 
+ * User authentication page with email/password and OAuth (Google) options.
+ * Supports credentials-based authentication via NextAuth.js.
+ * 
+ * Features:
+ * - Email/password sign-in form
+ * - Google OAuth sign-in with consent prompt
+ * - Theme support (dark/light mode)
+ * - Error handling and user feedback
+ * - Loading states for UX feedback
+ * - Responsive design with Tailwind CSS
+ * - Form validation (required fields)
+ * 
+ * Authentication flow:
+ * 1. User enters email and password
+ * 2. Submits to NextAuth credentials provider
+ * 3. On success, redirects to home (/)
+ * 4. On error, displays user-friendly error message
+ * 5. Alternative: Google OAuth for social login
+ * 
+ * Error handling:
+ * - CredentialsSignin: "Invalid email or password"
+ * - Other errors: Displayed as-is
+ * - Network errors: Caught and displayed
+ * 
+ * Navigation:
+ * - Link to sign up page for new users
+ * - Redirects to home on successful login
+ * 
+ * Accessibility:
+ * - Labeled form inputs
+ * - Disabled state during submission
+ * - Loading indicators
+ * - Error messages displayed inline
+ * 
+ * @route /auth/signin
+ * @public (accessible without authentication)
+ */
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +51,20 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 
+/**
+ * SignIn Component
+ * 
+ * Renders the authentication form with email, password, and OAuth options.
+ * Manages form state, submission, and error handling.
+ * 
+ * State:
+ * - email: User email input
+ * - password: User password input
+ * - error: Error message to display
+ * - loading: Submit button loading state
+ * - googleLoading: Google button loading state
+ * - darkMode: Theme preference
+ */
 export default function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -20,6 +74,20 @@ export default function SignIn() {
     const { darkMode, setDarkMode } = useTheme();
     const router = useRouter();
 
+    /**
+     * Handles form submission for credentials-based sign-in.
+     * 
+     * Process:
+     * 1. Prevents default form submission
+     * 2. Sets loading state
+     * 3. Clears previous errors
+     * 4. Calls NextAuth signIn with credentials
+     * 5. Maps error codes to user-friendly messages
+     * 6. Redirects to home on success
+     * 7. Displays errors on failure
+     * 
+     * @param e - Form submit event
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -49,6 +117,18 @@ export default function SignIn() {
         }
     };
 
+    /**
+     * Initiates Google OAuth sign-in flow.
+     * 
+     * Process:
+     * 1. Sets loading state while OAuth redirects
+     * 2. Calls NextAuth Google provider
+     * 3. Includes consent prompt for account selection
+     * 4. Handles errors gracefully
+     * 5. Redirects to home on successful callback
+     * 
+     * Note: OAuth provider handles redirect after successful authentication
+     */
     const handleGoogleSignIn = async () => {
         setGoogleLoading(true);
         setError('');
@@ -64,6 +144,23 @@ export default function SignIn() {
         }
     };
 
+    /**
+     * Render UI with form, OAuth button, and theme support.
+     * 
+     * Layout:
+     * - Full-screen flex container with header
+     * - Centered form card (max-width: 28rem)
+     * - Form fields with theme-aware styling
+     * - Error display area
+     * - Submit and OAuth buttons
+     * - Link to sign-up page
+     * 
+     * Styling:
+     * - Supports dark mode via ThemeProvider
+     * - Responsive padding (4rem horizontal)
+     * - Tailwind CSS utility classes
+     * - Hover states for interactive elements
+     */
     return (
         <div className={cn(
             "flex flex-col h-screen",

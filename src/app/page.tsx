@@ -1,3 +1,49 @@
+/**
+ * Chat Page (Home Page)
+ * 
+ * Main chatbot interface with real-time conversation support.
+ * Provides a full-featured chat experience with multiple capabilities.
+ * 
+ * Features:
+ * - Multi-turn AI conversations with Gemini API
+ * - Chat session management (create, load, delete, clear)
+ * - Message regeneration and response navigation
+ * - Server-sent events (SSE) streaming for real-time responses
+ * - File context support (PDF, images, documents)
+ * - Voice/speech recognition input
+ * - Dark mode / Light mode theming
+ * - Scroll-to-bottom functionality
+ * - Chat history sidebar
+ * - Error boundaries for component error handling
+ * - Auto-authentication checks
+ * 
+ * Authentication: Required - Redirects to /auth/signin if not authenticated
+ * 
+ * Component Structure:
+ * - ChatContainer: Full-screen layout wrapper
+ * - ChatHeader: Navigation and theme toggle
+ * - ChatHistory: Sidebar with session list
+ * - MessageList: Display chat messages with markdown support
+ * - ChatInput: User message input with file upload
+ * - TypingIndicator: Shows when bot is responding
+ * - ListeningIndicator: Shows when speech recognition is active
+ * - FileContextIndicator: Displays uploaded file context
+ * - ScrollToBottomButton: Shortcut to latest message
+ * 
+ * Custom Hooks Used:
+ * - useChatState: Manages local UI state (input, loading, etc.)
+ * - useChatSessions: Handles session and message persistence
+ * - useScrollManagement: Manages scroll position and visibility
+ * - useGemini: AI response generation
+ * - useSpeechRecognition: Voice input handling
+ * - useFileHandling: File upload and processing
+ * - useMessageActions: Message sending and regeneration
+ * 
+ * Session Storage:
+ * - Sessions stored in MongoDB with user isolation
+ * - Messages include timestamps and metadata
+ * - Auto-saves on conversation updates
+ */
 "use client";
 
 import { useEffect, useState } from "react";

@@ -1,3 +1,18 @@
+/**
+ * PDF Loading and Processing Utilities
+ * 
+ * Lazy loads and manages PDF.js library for client-side PDF processing:
+ * - Loads PDF.js from CDN only when needed (first PDF upload)
+ * - Extracts text from up to 5 pages of PDF
+ * - Limits extraction to 5000 characters per file
+ * 
+ * Features:
+ * - usePDFLoader: CDN loading with worker setup
+ * - extractTextFromPDF: Text extraction with page limits
+ * - usePDFProcessing: Combined loading and processing hook
+ * - Error handling for corrupt or unreadable files
+ */
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

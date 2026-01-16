@@ -1,3 +1,17 @@
+/**
+ * Type Definitions
+ * 
+ * Core TypeScript interfaces for application data structures:
+ * - Message: Chat message with optional file attachment
+ * - ChatSession: Persistent chat history with metadata
+ * - FileContextType: File data for chat context (images, PDFs, documents)
+ * - SpeechRecognitionState: Speech input state tracking
+ * - SearchResult: Search result metadata
+ */
+
+/**
+ * Chat message structure
+ */
 export interface Message {
     id: number;
     role: "user" | "bot";
@@ -8,6 +22,9 @@ export interface Message {
     currentResponseIndex?: number; // Current response being displayed
 }
 
+/**
+ * Chat session structure for history
+ */
 export interface ChatSession {
     id: string;
     title: string;
@@ -15,6 +32,9 @@ export interface ChatSession {
     messages: Message[];
 }
 
+/**
+ * File context for attachments (images, documents)
+ */
 export type FileContextType = {
     type: "pdf" | "image" | "txt" | "docx" | "xlsx" | "csv" | "pptx";
     data: string; // extracted text for API
@@ -22,11 +42,17 @@ export type FileContextType = {
     filename: string;
 } | null;
 
+/**
+ * State tracking for speech recognition
+ */
 export interface SpeechRecognitionState {
     isListening: boolean;
     isAvailable: boolean;
 }
 
+/**
+ * Search result structure for chat history search
+ */
 export interface SearchResult {
     sessionId: string;
     sessionTitle: string;

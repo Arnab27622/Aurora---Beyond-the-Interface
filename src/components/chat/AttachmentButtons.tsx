@@ -1,3 +1,13 @@
+/**
+ * AttachmentButtons Component
+ * 
+ * Renders a set of icon buttons for file, image, and voice input attachments.
+ * Visible only on medium (md) screens and above, providing quick access to:
+ * - PDF/document file uploads
+ * - Voice input toggle (when supported)
+ * - Image file uploads
+ */
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { File, ImageIcon, Mic, Square, Loader2 } from "lucide-react";

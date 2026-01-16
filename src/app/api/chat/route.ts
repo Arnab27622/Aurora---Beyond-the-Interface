@@ -1,3 +1,39 @@
+/**
+ * Chat API Route Handler
+ * 
+ * Handles chat message processing with optional streaming response.
+ * Supports multi-turn conversations and file context (PDF, images, documents).
+ * 
+ * Features:
+ * - CSRF protection via token validation
+ * - Request validation and sanitization
+ * - Support for file context (PDF, images, text documents)
+ * - Streaming and non-streaming responses
+ * - Error handling with detailed error codes
+ * - Request timeout handling
+ * 
+ * Authentication: Required (via JWT token from NextAuth)
+ * Content-Type: application/json
+ * 
+ * Request body:
+ * {
+ *   input: string (max 10000 chars) - Current user message
+ *   messages: array - Message history with role and content
+ *   fileContext: object - Optional file data (type, data, filename)
+ *   skipCache?: boolean - Optional cache skip flag
+ * }
+ * 
+ * Query parameters:
+ * - stream=true: Enable server-sent events streaming response
+ * 
+ * Response:
+ * - Streaming: Server-sent events with text chunks
+ * - Non-streaming: JSON with { content: string }
+ * 
+ * @see validation.ts for request validation logic
+ * @see sanitizer.ts for data sanitization
+ * @see gemini-client.ts for API integration
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { validateRequestBody } from "./validation";
@@ -10,6 +46,12 @@ import { validateCSRFToken } from "@/lib/csrf";
 import { logWarn, logError } from "@/lib/logger";
 import type { ChatRequest } from "./types";
 
+/**
+ * POST /api/chat
+ * 
+ * Processes a chat message and returns bot response.
+ * Requires authentication and valid CSRF token.
+ */
 export async function POST(request: NextRequest) {
   // Validate request method
   if (request.method !== "POST") {

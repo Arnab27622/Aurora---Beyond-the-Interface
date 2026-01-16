@@ -1,3 +1,14 @@
+/**
+ * ChatHistory Component
+ * 
+ * Sidebar component that displays:
+ * - List of previous chat sessions
+ * - Search functionality to find specific messages
+ * - Quick action buttons (New Chat, Settings)
+ * - User settings and logout options
+ * - Collapsible on mobile with smooth animations
+ */
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Menu, Settings, Search, X } from "lucide-react";

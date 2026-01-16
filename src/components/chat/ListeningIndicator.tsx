@@ -1,3 +1,11 @@
+/**
+ * ListeningIndicator Component
+ * 
+ * Shows a fixed position indicator while voice input is being recorded.
+ * Displays "Listening..." text with animated pulsing dot animation.
+ * Positioned at bottom-center of screen with theme-aware colors.
+ */
+
 import { cn } from "@/lib/utils";
 
 interface ListeningIndicatorProps {

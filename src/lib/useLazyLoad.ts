@@ -1,3 +1,18 @@
+/**
+ * Lazy Loading Hooks
+ * 
+ * Provides performance optimization for component visibility:
+ * - useLazyLoad: Visibility detection via Intersection Observer
+ * - useLazyResource: Conditional resource loading (e.g., PDF.js)
+ * - useDebouncedLazyLoad: Debounced lazy loading to prevent thrashing
+ * 
+ * Features:
+ * - Configurable intersection thresholds
+ * - Root margin support for ahead-of-time loading
+ * - Error state management for failed loads
+ * - Automatic cleanup on unmount
+ */
+
 'use client';
 
 import { useEffect, useState, RefObject } from 'react';

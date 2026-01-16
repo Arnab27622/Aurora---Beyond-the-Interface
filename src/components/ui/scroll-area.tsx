@@ -1,3 +1,16 @@
+/**
+ * ScrollArea Component
+ * 
+ * Custom scrollable container with styled scrollbar.
+ * Built on Radix UI ScrollArea primitive for accessibility.
+ * Features:
+ * - Custom styled scrollbar
+ * - Smooth scrolling behavior
+ * - Both vertical and horizontal scroll support
+ * - Theme-aware styling
+ * - Accessibility compliant with focus management
+ */
+
 "use client"
 
 import * as React from "react"

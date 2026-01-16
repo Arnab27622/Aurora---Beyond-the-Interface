@@ -1,3 +1,17 @@
+/**
+ * File Download Utilities
+ * 
+ * Provides functions to download files in the browser:
+ * - Image files (as data URLs)
+ * - Binary files (PDFs, DOCX, XLSX, etc.) converted from base64
+ * 
+ * Features:
+ * - MIME type mapping for different file formats
+ * - Automatic blob creation for binary data
+ * - Error handling with fallback to text file
+ * - URL cleanup to prevent memory leaks
+ */
+
 import { FileContextType } from "@/lib/types";
 
 export const getMimeType = (fileType: string): string => {

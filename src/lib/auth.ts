@@ -1,3 +1,17 @@
+/**
+ * NextAuth Configuration and Setup
+ * 
+ * Handles authentication with multiple providers:
+ * - Credentials (email + password with account lockout)
+ * - Google OAuth
+ * 
+ * Features:
+ * - Progressive account lockout after failed attempts (5min → 15min → 1hr)
+ * - JWT-based session management
+ * - Google account linking with existing accounts
+ * - Secure password validation with bcrypt
+ */
+
 import NextAuth, { NextAuthOptions, type DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';

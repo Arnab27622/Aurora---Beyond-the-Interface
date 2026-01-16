@@ -1,3 +1,18 @@
+/**
+ * Error Handler Utilities
+ * 
+ * Custom error classes and utilities for consistent error handling:
+ * - AppError: Base error class with code and status
+ * - ValidationError: For validation failures (400)
+ * - NotFoundError: For missing resources (404)
+ * - APIError: For API failures with custom status codes
+ * 
+ * Features:
+ * - Type guards for error checking
+ * - Consistent error message extraction
+ * - Structured error logging
+ */
+
 export class AppError extends Error {
   constructor(
     message: string,

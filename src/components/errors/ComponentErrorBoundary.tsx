@@ -1,3 +1,16 @@
+/**
+ * ComponentErrorBoundary Component
+ * 
+ * Specialized error boundary for individual component errors.
+ * Allows graceful degradation of component functionality without crashing the entire app.
+ * Features:
+ * - Component-specific error tracking with optional name
+ * - Graceful fallback UI for degraded functionality
+ * - Customizable error fallback component
+ * - Component-scoped error logging
+ * - Retry mechanism to attempt recovery
+ */
+
 'use client';
 
 import React, { ReactNode } from 'react';
@@ -74,6 +87,9 @@ interface ComponentErrorFallbackProps {
   componentName?: string;
 }
 
+/**
+ * Default error UI for component-level errors
+ */
 function ComponentErrorFallback({
   error,
   retry,

@@ -1,3 +1,15 @@
+/**
+ * ChatInput Component
+ * 
+ * Main input section of the chat interface combining:
+ * - Hidden file input elements for document and image uploads
+ * - Attachment buttons (desktop view)
+ * - Mobile attachment dropdown menu
+ * - Text input field with sanitization
+ * - Send button with disabled state management
+ * Handles form submission and message sending.
+ */
+
 import { cn } from "@/lib/utils";
 import { FileContextType } from "@/lib/types";
 import React from "react";

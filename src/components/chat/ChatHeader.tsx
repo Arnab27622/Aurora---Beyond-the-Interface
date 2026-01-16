@@ -1,3 +1,13 @@
+/**
+ * ChatHeader Component
+ * 
+ * Header bar of the chat interface containing:
+ * - App logo and title (Aurora)
+ * - Dark/Light mode toggle button
+ * - Mobile menu toggle (hidden on desktop)
+ * - Optional chat clear functionality
+ */
+
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, Trash2, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";

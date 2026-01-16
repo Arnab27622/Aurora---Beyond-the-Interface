@@ -1,3 +1,22 @@
+/**
+ * Request Validation Module
+ * 
+ * Provides comprehensive validation for chat API requests using Zod schemas
+ * and custom validation functions. Includes:
+ * - Input text validation (length, content)
+ * - Message history validation (format, content)
+ * - File context validation (type, size, format)
+ * - Security pattern detection (XSS, injection attacks)
+ * 
+ * Validation constraints are defined in constants.ts:
+ * - MAX_INPUT_LENGTH: 10000 characters
+ * - MAX_MESSAGE_LENGTH: 10000 characters per message
+ * - MAX_MESSAGES: 100 messages max
+ * - MAX_FILE_DATA_LENGTH: 5MB (base64 encoded)
+ * 
+ * @see types.ts for ValidationResult interface
+ * @see constants.ts for validation limits
+ */
 import { z } from "zod";
 import {
   sanitizeBase64,

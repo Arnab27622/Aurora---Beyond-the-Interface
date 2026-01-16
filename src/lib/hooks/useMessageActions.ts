@@ -1,3 +1,21 @@
+/**
+ * Message Actions Hook
+ * 
+ * Handles all chat message operations:
+ * - Send new messages with streaming response
+ * - Regenerate bot responses
+ * - Navigate between multiple response variations
+ * - Session management integration
+ * 
+ * Features:
+ * - CSRF token management with caching
+ * - Empty placeholder for streaming UX
+ * - Multiple response tracking per message
+ * - Previous message context for regeneration
+ * - Automatic file context clearing after send
+ * - Error messages with API diagnostics
+ */
+
 import { Message, FileContextType } from "@/lib/types";
 import { logError } from "@/lib/errorHandler";
 
@@ -22,6 +40,23 @@ async function getCSRFToken(forceRefresh = false): Promise<string> {
   }
 }
 
+/**
+ * Message Actions Hook
+ * 
+ * Handles all chat message operations:
+ * - Send new messages with streaming response
+ * - Regenerate bot responses
+ * - Navigate between multiple response variations
+ * - Session management integration including CSRF and auto-save
+ * 
+ * @param sendGeminiStreamMessage Streaming function from useGemini
+ * @param messages Current list of messages
+ * @param setMessages State setter for messages
+ * @param messageId Current message ID counter
+ * @param setMessageId State setter for message ID
+ * @param isConfigured Whether API is configured
+ * @returns Object containing message action handlers
+ */
 export const useMessageActions = (
   sendGeminiStreamMessage: any,
   messages: Message[],
@@ -59,7 +94,7 @@ export const useMessageActions = (
       try {
         const title = input.trim().substring(0, 30) + (input.trim().length > 30 ? "..." : "") || "New Chat";
         const csrfToken = await getCSRFToken();
-        
+
         const response = await fetch("/api/chat-sessions", {
           method: "POST",
           headers: {

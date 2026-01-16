@@ -1,3 +1,18 @@
+/**
+ * Gemini AI Integration Hook
+ * 
+ * Provides interface to Gemini API for chat interactions:
+ * - sendMessage: Single request with full response
+ * - streamMessage: SSE streaming for real-time responses
+ * 
+ * Features:
+ * - Input sanitization for security
+ * - CSRF token management with retry logic
+ * - Automatic token refresh on 403 errors
+ * - File context support for document-aware responses
+ * - Async generator for streaming responses
+ */
+
 import { useCallback } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { sanitizeInput } from "@/lib/sanitize";
@@ -53,6 +68,16 @@ async function fetchCSRFToken(forceRefresh = false): Promise<string> {
   }
 }
 
+/**
+ * Gemini AI Integration Hook
+ * 
+ * Provides interface to Gemini API for chat interactions:
+ * - sendMessage: Single request with full response
+ * - streamMessage: SSE streaming for real-time responses
+ * - Handles CSRF tokens and input sanitization
+ * 
+ * @returns Object containing message sending functions
+ */
 export function useGemini(): UseGeminiReturn {
   const isConfigured = true;
 

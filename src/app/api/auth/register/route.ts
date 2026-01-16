@@ -1,3 +1,45 @@
+/**
+ * User Registration API
+ * 
+ * Handles user account creation with comprehensive validation and security.
+ * 
+ * Features:
+ * - Email uniqueness validation
+ * - Strong password requirements (8+ chars, entropy check, blacklist)
+ * - Rate limiting (3 requests per minute per IP)
+ * - Zod schema validation for input
+ * - bcryptjs password hashing with salt rounds 12
+ * - Password strength evaluation with zxcvbn
+ * - Audit logging of registration events
+ * 
+ * Authentication: Not required (public endpoint)
+ * Method: POST
+ * 
+ * Request body:
+ * {
+ *   name: string (2-100 chars),
+ *   email: string (valid email format),
+ *   password: string (8-128 chars, strength score >= 2)
+ * }
+ * 
+ * Password requirements:
+ * - Minimum 8 characters, maximum 128
+ * - Not in common password blacklist
+ * - Entropy score >= 2 (using zxcvbn)
+ * - Should contain mix of upper, lower, numbers, special chars
+ * 
+ * Response:
+ * Success (201): { message: string, userId: string }
+ * Error: { error: string, code?: string, retryAfter?: number }
+ * 
+ * Error codes:
+ * - RATE_LIMITED (429): Too many registration attempts from this IP
+ * - WEAK_PASSWORD (400): Password doesn't meet strength requirements
+ * - Validation error (400): Input validation failed
+ * - 500: Server error during registration
+ * 
+ * @see zxcvbn for password strength algorithm details
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
@@ -10,6 +52,7 @@ import { z } from 'zod';
 
 /**
  * Common weak passwords to blacklist
+ * Checked case-insensitively during validation
  */
 const WEAK_PASSWORD_PATTERNS = [
     'password', 'password123', 'admin', 'admin123', '123456', '12345678',
@@ -20,6 +63,16 @@ const WEAK_PASSWORD_PATTERNS = [
 /**
  * Validate password strength using zxcvbn and common pattern blacklist
  * Requirements: At least 8 characters, score >= 2 (fair), and not in blacklist
+ * 
+ * Strength scores (zxcvbn):
+ * - 0: Too weak
+ * - 1: Weak
+ * - 2: Fair (minimum acceptable)
+ * - 3: Good
+ * - 4: Strong
+ * 
+ * @param password - Password to validate
+ * @returns {object} { valid: boolean, error?: string }
  */
 function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
     if (!password || password.length < 8) {

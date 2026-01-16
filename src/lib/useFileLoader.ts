@@ -1,3 +1,20 @@
+/**
+ * File Text Extraction Hook
+ * 
+ * Extracts text content from various file formats:
+ * - TXT: Plain text files
+ * - DOCX: Word documents (via mammoth)
+ * - XLSX: Excel spreadsheets (via xlsx)
+ * - CSV: Comma-separated values
+ * - PPTX: PowerPoint presentations (via pptx-parser)
+ * 
+ * Features:
+ * - Lazy library loading (libraries loaded on demand)
+ * - 50k character limit per file
+ * - Error handling with user-friendly messages
+ * - useFileLoader hook for state management
+ */
+
 'use client';
 
 import { useCallback, useState } from 'react';

@@ -1,3 +1,11 @@
+/**
+ * FileAttachment Component
+ * 
+ * Displays an attached file (document or image) as a clickable button.
+ * Provides visual indication of file type with appropriate icon.
+ * Triggers preview modal for images or download for documents.
+ */
+
 import React from "react";
 import { File, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";

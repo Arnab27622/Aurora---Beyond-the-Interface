@@ -1,3 +1,10 @@
+/**
+ * EmptyState Component
+ * 
+ * Displays a welcome message when no chat messages exist.
+ * Centered on screen with a friendly prompt to encourage user interaction.
+ */
+
 export function EmptyState() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">

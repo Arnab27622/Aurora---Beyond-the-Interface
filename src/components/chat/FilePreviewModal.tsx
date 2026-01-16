@@ -1,3 +1,14 @@
+/**
+ * FilePreviewModal Component
+ * 
+ * Full-screen modal for previewing attached files.
+ * Features:
+ * - Displays images with Next.js Image component
+ * - Shows document content in a scrollable container
+ * - Download button for file export
+ * - Close button and backdrop to exit preview
+ */
+
 import React from "react";
 import { X, File, ImageIcon, Download } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -1,3 +1,14 @@
+/**
+ * SendButton Component
+ * 
+ * Submit button for sending chat messages.
+ * Features:
+ * - Disabled when message is empty and no file context exists
+ * - Loading spinner animation while message is being sent
+ * - Prevents multiple submissions during processing
+ * - Accessible with semantic labels
+ */
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Send, Loader2 } from "lucide-react";

@@ -1,3 +1,11 @@
+/**
+ * TypingIndicator Component
+ * 
+ * Shows "Typing..." indicator at bottom of screen while user is typing.
+ * Helps provide real-time feedback about user input state.
+ * Theme-aware styling for light and dark modes.
+ */
+
 import { cn } from "@/lib/utils";
 
 interface TypingIndicatorProps {

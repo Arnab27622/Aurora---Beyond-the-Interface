@@ -1,3 +1,13 @@
+/**
+ * HiddenFileInputs Component
+ * 
+ * Renders hidden file input elements for document and image uploads.
+ * Accepts specific file types:
+ * - Documents: PDF, TXT, DOCX, XLSX, CSV, PPTX
+ * - Images: All image formats
+ * Controlled by refs from parent component.
+ */
+
 import React from "react";
 
 interface HiddenFileInputsProps {

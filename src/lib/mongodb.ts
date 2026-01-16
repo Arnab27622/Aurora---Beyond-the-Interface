@@ -1,3 +1,17 @@
+/**
+ * MongoDB Connection Management
+ * 
+ * Handles Mongoose connection pooling and caching:
+ * - Prevents connection exhaustion during development hot reloads
+ * - Maintains single connection instance globally
+ * - Supports promise-based async connection establishment
+ * 
+ * Features:
+ * - Global cached connection to avoid connection leaks
+ * - Automatic connection initialization
+ * - Error handling with promise caching
+ */
+
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI!;

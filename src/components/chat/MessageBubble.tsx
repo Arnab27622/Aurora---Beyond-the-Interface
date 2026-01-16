@@ -1,3 +1,15 @@
+/**
+ * MessageBubble Component
+ * 
+ * Core component for rendering a single chat message.
+ * Features:
+ * - Markdown content rendering
+ * - Copy button for message content
+ * - Optional children elements (file attachments, etc.)
+ * - Action buttons section for bot messages (regenerate, navigate)
+ * - Theme-aware styling for user/bot messages
+ */
+
 import React from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import { cn } from "@/lib/utils";

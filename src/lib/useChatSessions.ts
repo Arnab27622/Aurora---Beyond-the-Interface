@@ -1,3 +1,19 @@
+/**
+ * Chat Sessions Management Hook
+ * 
+ * Manages persistent chat history with database sync:
+ * - Create, load, delete, and clear chat sessions
+ * - Automatic session persistence to database
+ * - CSRF token management for secure requests
+ * - Debounced saves to optimize API calls
+ * 
+ * Features:
+ * - Session caching and state management
+ * - Background persistence with debouncing
+ * - Hydration tracking for SSR compatibility
+ * - User-specific session isolation
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { Message, ChatSession } from "@/lib/types";
 
@@ -39,6 +55,18 @@ interface UseChatSessionsReturn {
   setCurrentSessionId: (id: string | null) => void;
 }
 
+/**
+ * Chat Sessions Management Hook
+ * 
+ * Manages persistent chat history with database sync:
+ * - Create, load, delete, and clear chat sessions
+ * - Automatic session persistence to database
+ * - CSRF token management for secure requests
+ * - Debounced saves to optimize API calls
+ * 
+ * @param userId Current user ID
+ * @returns Object with session state and management functions
+ */
 export function useChatSessions(userId?: string): UseChatSessionsReturn {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -196,7 +224,7 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
 
       try {
         const csrfToken = await getCSRFToken();
-        
+
         const response = await fetch(`/api/chat-sessions?sessionId=${sessionId}`, {
           method: "DELETE",
           headers: {
@@ -243,7 +271,7 @@ export function useChatSessions(userId?: string): UseChatSessionsReturn {
 
     try {
       const csrfToken = await getCSRFToken();
-      
+
       const response = await fetch(`/api/chat-sessions?sessionId=${currentSessionId}`, {
         method: "DELETE",
         headers: {

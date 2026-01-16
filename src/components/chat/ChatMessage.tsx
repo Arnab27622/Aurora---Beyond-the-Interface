@@ -1,3 +1,15 @@
+/**
+ * ChatMessage Component
+ * 
+ * Renders a single chat message with:
+ * - Message bubble with markdown content rendering
+ * - File attachment display and preview
+ * - Cached response indicator badge
+ * - Response navigator for multiple responses
+ * - Regenerate button for bot messages
+ * - Thinking state when regenerating
+ */
+
 import React, { useState } from "react";
 import { Message, FileContextType } from "@/lib/types";
 import { Components } from "react-markdown";

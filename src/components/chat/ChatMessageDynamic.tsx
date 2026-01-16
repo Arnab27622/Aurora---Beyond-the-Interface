@@ -1,3 +1,16 @@
+/**
+ * ChatMessageDynamic Component
+ * 
+ * Dynamic rendering of individual chat messages with lazy-loaded markdown.
+ * Features:
+ * - Uses Next.js dynamic import for performance optimization
+ * - Renders markdown content with custom components
+ * - Shows loading skeleton during markdown component load
+ * - Displays cached response indicator badge
+ * - Theme-aware styling for user/bot messages
+ * - Auto-optimizes by deferring markdown parsing
+ */
+
 'use client';
 
 import dynamic from 'next/dynamic';

@@ -1,3 +1,16 @@
+/**
+ * ErrorBoundary Component
+ * 
+ * Class component that catches JavaScript errors anywhere in the child component tree.
+ * Provides graceful error handling with custom fallback UI or custom error handler.
+ * Features:
+ * - Error state management with retry capability
+ * - Error logging to console
+ * - Customizable fallback UI
+ * - Default error display with full error details
+ * - Reset functionality to recover from errors
+ */
+
 'use client';
 
 import React, { ReactNode } from 'react';
@@ -54,6 +67,9 @@ interface DefaultErrorFallbackProps {
   retry: () => void;
 }
 
+/**
+ * Default error UI displayed when no custom fallback is provided
+ */
 function DefaultErrorFallback({ error, retry }: DefaultErrorFallbackProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">

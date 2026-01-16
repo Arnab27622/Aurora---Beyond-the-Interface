@@ -1,3 +1,53 @@
+/**
+ * Sign Up Page
+ * 
+ * User registration page with account creation and OAuth options.
+ * Handles new user registration with email/password.
+ * 
+ * Features:
+ * - New user account creation form
+ * - Password confirmation validation
+ * - Google OAuth sign-up with consent prompt
+ * - Theme support (dark/light mode)
+ * - Auto sign-in after successful registration
+ * - Error handling and user feedback
+ * - Loading states for UX feedback
+ * - Responsive design with Tailwind CSS
+ * - Form validation (required fields, password match)
+ * 
+ * Registration flow:
+ * 1. User enters name, email, and password
+ * 2. Validates password match with confirmation
+ * 3. Submits to /api/auth/register endpoint
+ * 4. Server validates password strength and email uniqueness
+ * 5. User account is created in database
+ * 6. Auto-signs in user with credentials
+ * 7. Redirects to home (/)
+ * 8. On error: displays user-friendly error message
+ * 
+ * Validation:
+ * - Frontend: Password match validation
+ * - Backend: Password strength (8+ chars, entropy >= 2), email uniqueness
+ * 
+ * Error handling:
+ * - Password mismatch: "Passwords do not match"
+ * - Registration error: Server error message
+ * - Sign-in after registration failure: Fallback with manual sign-in prompt
+ * - Network errors: Caught and displayed
+ * 
+ * Navigation:
+ * - Link to sign in page for existing users
+ * - Redirects to home on successful sign-up
+ * 
+ * Accessibility:
+ * - Labeled form inputs
+ * - Disabled state during submission
+ * - Loading indicators
+ * - Error messages displayed inline
+ * 
+ * @route /auth/signup
+ * @public (accessible without authentication)
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,6 +62,22 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 
 
+/**
+ * SignUp Component
+ * 
+ * Renders the registration form with name, email, password, and OAuth options.
+ * Manages form state, submission, validation, and error handling.
+ * 
+ * State:
+ * - name: User full name input
+ * - email: User email input
+ * - password: User password input
+ * - confirmPassword: Password confirmation for match validation
+ * - error: Error message to display
+ * - loading: Submit button loading state
+ * - googleLoading: Google button loading state
+ * - darkMode: Theme preference
+ */
 export default function SignUp() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -23,6 +89,25 @@ export default function SignUp() {
     const { darkMode, setDarkMode } = useTheme();
     const router = useRouter();
 
+    /**
+     * Handles form submission for account registration.
+     * 
+     * Process:
+     * 1. Validates password match before submission
+     * 2. Sends registration request to /api/auth/register
+     * 3. Server validates password strength and email uniqueness
+     * 4. On success: Auto-signs in user with credentials
+     * 5. Redirects to home page
+     * 6. On sign-in error: Shows error message with manual signin fallback
+     * 7. On registration error: Displays server error message
+     * 
+     * Validation:
+     * - Frontend: Password match check
+     * - Backend: Password strength (8+ chars, entropy score >= 2)
+     * - Backend: Email must be unique (not already registered)
+     * 
+     * @param e - Form submit event
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -68,6 +153,20 @@ export default function SignUp() {
         }
     };
 
+    /**
+     * Initiates Google OAuth sign-up flow.
+     * 
+     * Process:
+     * 1. Sets loading state while OAuth redirects
+     * 2. Calls NextAuth Google provider
+     * 3. Includes consent prompt for account selection
+     * 4. Handles errors gracefully
+     * 5. Google handles account creation if new user
+     * 6. Redirects to home on successful callback
+     * 
+     * Note: Google OAuth provider handles both sign-up and sign-in,
+     * creating new account if user doesn't exist in database
+     */
     const handleGoogleSignIn = async () => {
         setGoogleLoading(true);
         setError('');
@@ -83,6 +182,25 @@ export default function SignUp() {
         }
     };
 
+    /**
+     * Render UI with registration form, OAuth button, and theme support.
+     * 
+     * Layout:
+     * - Full-screen flex container with header
+     * - Centered form card (max-width: 28rem)
+     * - Form fields with theme-aware styling
+     * - Name, email, password, and confirmation fields
+     * - Error display area
+     * - Submit and OAuth buttons
+     * - Link to sign-in page for existing users
+     * 
+     * Styling:
+     * - Supports dark mode via ThemeProvider
+     * - Responsive padding (4rem horizontal)
+     * - Tailwind CSS utility classes
+     * - Hover states for interactive elements
+     * - Form spacing with gap utilities
+     */
     return (
         <div className={cn(
             "flex flex-col h-screen",

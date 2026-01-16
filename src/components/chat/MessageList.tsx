@@ -1,3 +1,15 @@
+/**
+ * MessageList Component
+ * 
+ * Container for displaying all chat messages.
+ * Features:
+ * - Empty state display when no messages exist
+ * - Error boundary wrapping for each message
+ * - Auto-scroll to bottom with ref
+ * - Responsive layout with max-width constraint
+ * - Integrates regeneration and response navigation
+ */
+
 import { Message } from "@/lib/types";
 import { ChatMessage } from "./ChatMessage";
 import { ComponentErrorBoundary } from "@/components/errors/ComponentErrorBoundary";

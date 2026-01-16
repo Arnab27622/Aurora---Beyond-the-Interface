@@ -1,3 +1,17 @@
+/**
+ * Async Error Handling Hooks
+ * 
+ * Custom React hooks for handling Promise-based async operations:
+ * - useAsyncError: Execute promise with state management and error boundaries
+ * - useAsyncHandler: Simplified async function wrapper with error callbacks
+ * 
+ * Features:
+ * - Loading and error state tracking
+ * - Automatic error logging
+ * - Type-safe result handling
+ * - Promise rejection catching
+ */
+
 'use client';
 
 import { useState, useCallback } from 'react';

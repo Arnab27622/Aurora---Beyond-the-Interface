@@ -1,3 +1,17 @@
+/**
+ * Card Component
+ * 
+ * Flexible card layout component with semantic subcomponents.
+ * Provides a complete card structure with header, content, and footer sections.
+ * Features:
+ * - Card header with responsive grid layout
+ * - Card action section for header actions
+ * - Card title and description for semantic markup
+ * - Card content and footer for body and action areas
+ * - Theme-aware styling
+ * - Container queries support for responsive behavior
+ */
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 

@@ -1,3 +1,15 @@
+/**
+ * MobileAttachmentDropdown Component
+ * 
+ * Mobile-exclusive dropdown menu for file attachments.
+ * Features:
+ * - Visible only on mobile/tablet (hidden on md screens and above)
+ * - Dropdown trigger button with plus icon
+ * - Options for file, image, and voice input uploads
+ * - Outside click detection to close dropdown
+ * - Integrated loading and listening states
+ */
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { File, ImageIcon, Mic, Square, Loader2, Plus } from "lucide-react";

@@ -1,3 +1,16 @@
+/**
+ * LoadingSkeleton Component
+ * 
+ * Reusable loading placeholder component with multiple variants.
+ * Used as fallback during async operations and data loading.
+ * Features:
+ * - Multiple variants: text, card, message, full
+ * - Customizable width and height
+ * - Theme-aware colors (light/dark mode)
+ * - Animated pulse effect
+ * - Responsive sizing
+ */
+
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -9,9 +22,6 @@ interface LoadingSkeletonProps {
   variant?: 'text' | 'card' | 'message' | 'full';
 }
 
-/**
- * Reusable loading skeleton component
- */
 export const LoadingSkeleton = ({
   darkMode = true,
   width = 'w-full',

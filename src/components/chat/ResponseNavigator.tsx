@@ -1,3 +1,11 @@
+/**
+ * ResponseNavigator Component
+ * 
+ * Allows navigation between multiple AI-generated responses for the same prompt.
+ * Displays current response index and total count.
+ * Provides previous/next buttons with disabled states at boundaries.
+ */
+
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -1,3 +1,14 @@
+/**
+ * InputField Component
+ * 
+ * Main text input field for chat messages.
+ * Features:
+ * - Sanitizes input to prevent XSS attacks
+ * - Dynamic placeholder based on file context
+ * - Tracks typing state for UI indicators
+ * - Disabled during message loading or file upload
+ */
+
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { sanitizeInput } from "@/lib/sanitize";

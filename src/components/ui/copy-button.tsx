@@ -1,3 +1,16 @@
+/**
+ * CopyButton Component
+ * 
+ * Button for copying text to clipboard with visual feedback.
+ * Features:
+ * - Copy-to-clipboard functionality using Clipboard API
+ * - Visual feedback with check icon on successful copy
+ * - Auto-revert to copy icon after 2 seconds
+ * - Theme-aware styling (light/dark mode)
+ * - Positioned at top or bottom of content
+ * - Accessible with proper aria labels
+ */
+
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";

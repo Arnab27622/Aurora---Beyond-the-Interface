@@ -1,3 +1,10 @@
+/**
+ * ThinkingBubble Component
+ * 
+ * Displays "Thinking..." message with pulse animation.
+ * Shown while bot is processing and generating a response.
+ */
+
 import React from "react";
 import { cn } from "@/lib/utils";
 

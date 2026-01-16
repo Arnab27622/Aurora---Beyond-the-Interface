@@ -1,3 +1,19 @@
+/**
+ * Speech Recognition Hook
+ * 
+ * Browser-based voice input using Web Speech API:
+ * - Continuous listening with interim/final results
+ * - Microphone permission handling
+ * - Error recovery and auto-restart
+ * 
+ * Features:
+ * - Browser support detection
+ * - Microphone access request handling
+ * - Graceful error handling
+ * - Language setting (en-US by default)
+ * - Audio input buffering with final transcripts
+ */
+
 import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UseSpeechRecognitionReturn {
@@ -6,6 +22,18 @@ interface UseSpeechRecognitionReturn {
   toggleSpeechRecognition: () => void;
 }
 
+/**
+ * Speech Recognition Hook
+ * 
+ * Browser-based voice input using Web Speech API:
+ * - Continuous listening with interim/final results
+ * - Microphone permission handling
+ * - Error recovery and auto-restart
+ * 
+ * @param setInput State setter for text input
+ * @param setIsTyping State setter for typing indicator
+ * @returns Object containing recognition state and controls
+ */
 export function useSpeechRecognition(
   setInput: (text: string) => void,
   setIsTyping: (typing: boolean) => void

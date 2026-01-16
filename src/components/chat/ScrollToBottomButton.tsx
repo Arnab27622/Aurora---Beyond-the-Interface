@@ -1,3 +1,11 @@
+/**
+ * ScrollToBottomButton Component
+ * 
+ * Floating button that appears when user scrolls up in the message list.
+ * Clicking scrolls back to the latest messages at bottom.
+ * Only visible when `show` prop is true.
+ */
+
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 

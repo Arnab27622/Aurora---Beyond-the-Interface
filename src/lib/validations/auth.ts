@@ -25,6 +25,7 @@ const nameSchema = z
 
 /**
  * Schema for signin requests
+ * Validates email and password requirements
  */
 export const signInSchema = z.object({
   email: emailSchema,
@@ -33,6 +34,7 @@ export const signInSchema = z.object({
 
 /**
  * Schema for registration requests
+ * Validates name, email, and password requirements
  */
 export const registerSchema = z.object({
   name: nameSchema,

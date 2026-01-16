@@ -1,3 +1,16 @@
+/**
+ * Type Definitions for Chat API
+ * 
+ * Defines interfaces for:
+ * - ChatRequest: Incoming chat message payload
+ * - ApiErrorResponse: Standardized error response format
+ * - ValidationResult: Result of validation operations
+ * - StreamChunk: Gemini API streaming response chunk
+ * - GeminiContent: Gemini API content format for conversations
+ * 
+ * Used throughout the chat API for type safety and validation.
+ */
+
 export interface ChatRequest {
   input: string;
   messages: Array<{

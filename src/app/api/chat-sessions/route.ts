@@ -1,3 +1,41 @@
+/**
+ * Chat Sessions API
+ * 
+ * Manages user's chat session CRUD operations.
+ * Stores conversation history with timestamps and metadata.
+ * 
+ * Features:
+ * - Session creation, retrieval, update, and deletion
+ * - Timeout protection for database operations
+ * - CSRF protection for state-modifying requests
+ * - Data sanitization and HTML escaping
+ * - User isolation (only accessing own sessions)
+ * - Sorted by most recent first
+ * 
+ * Authentication: Required for all endpoints
+ * 
+ * Endpoints:
+ * - GET: Fetch all sessions for user
+ * - POST: Create new chat session
+ * - PUT: Update session messages
+ * - DELETE: Delete a session by ID
+ * 
+ * Database timeout: 30 seconds per operation
+ * 
+ * Response format:
+ * {
+ *   sessions: [
+ *     {
+ *       id: string (UUID),
+ *       title: string (HTML escaped),
+ *       timestamp: number,
+ *       messages: [
+ *         { role: string, content: string (HTML escaped) }
+ *       ]
+ *     }
+ *   ]
+ * }
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -11,6 +49,7 @@ const DB_TIMEOUT_MS = 30000;
 
 /**
  * Wrapper function to add timeout to async operations
+ * Prevents long-running queries from blocking requests indefinitely
  */
 async function withTimeout<T>(
   promise: Promise<T>,

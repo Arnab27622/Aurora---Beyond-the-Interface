@@ -1,3 +1,41 @@
+/**
+ * Global Styles and Theme Configuration
+ * 
+ * Centralized styling for the entire application including:
+ * - Tailwind CSS imports and custom variants
+ * - Design token definitions (colors, fonts, spacing)
+ * - Light and dark mode color schemes (using oklch color space)
+ * - Scrollbar styling (webkit and Firefox)
+ * - Base layer resets and defaults
+ * 
+ * Color Space: OKLCH (perceptually uniform, better than HSL)
+ * - Values use oklch() CSS function for modern browsers
+ * 
+ * Color Tokens (light mode):
+ * - Primary: Dark gray (0.205 lightness)
+ * - Secondary/Muted: Light gray (0.97 lightness)
+ * - Background: White (1.0 lightness)
+ * - Foreground: Black (0.145 lightness)
+ * 
+ * Color Tokens (dark mode):
+ * - Background: Dark gray (0.145 lightness)
+ * - Foreground: White (0.985 lightness)
+ * - Cards/Surface: Slightly lighter gray (0.205 lightness)
+ * 
+ * Radius: 0.625rem (10px base unit)
+ * - Variants: sm, md (default), lg, xl
+ * 
+ * Fonts:
+ * - Sans: Geist Sans (from next/font/google)
+ * - Mono: Geist Mono (from next/font/google)
+ * 
+ * Scrollbar Styling:
+ * - Width: 8px (w-2 = 0.5rem)
+ * - Track: Dark (rgb(14, 14, 14))
+ * - Thumb: Medium gray (rgb(60, 60, 60))
+ * - Hover: Lighter gray (rgb(80, 80, 80))
+ * - Browser support: Webkit and Firefox
+ */
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
