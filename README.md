@@ -93,11 +93,11 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_super_secret_random_string
 
 # Database
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/mychatbot
+MONGODB_URI=your_mongodb_uri
 
 # AI API (Google Gemini)
 GEMINI_API_KEY=your_google_gemini_api_key
-GEMINI_MODEL_ID=gemini-pro
+GEMINI_MODEL_ID=your_gemini_model
 
 # Google Provider Configuration
 GOOGLE_CLIENT_ID=your_google_client_id
